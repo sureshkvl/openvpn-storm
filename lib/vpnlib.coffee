@@ -209,7 +209,8 @@ class vpnlib
                 '''
                 TODO: implement a module to act on service
                 '''
-                exec "svcs #{service} sync"
+                console.log "exec : monit start #{service}"
+                exec "monit start #{service}"
 
                 db.user.set id, body, ->
                     console.log "#{id} added to OpenVPN service configuration"
