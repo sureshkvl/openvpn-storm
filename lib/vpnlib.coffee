@@ -180,9 +180,7 @@ class vpnlib
         fileops.createFile filename, (result) ->
             return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
             fileops.updateFile filename, config
-            exec "touch /config/#{service}/on"
-            console.log "exec : monit restart #{service}"
-            exec "monit restart #{service}"
+            exec "touch /config/#{service}/on"            
             try
                 idb.set instance.id, instance, ->
                     console.log "#{instance.id} added to OpenVPN service configuration"
@@ -211,6 +209,8 @@ class vpnlib
                 '''
                 TODO: implement a module to act on service
                 '''
+                console.log "exec : monit restart #{service}"
+                exec "monit restart #{service}"
                 db.user.set id, body, ->
                     console.log "#{id} added to OpenVPN service configuration"
                     console.log body
