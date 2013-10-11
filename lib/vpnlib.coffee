@@ -37,14 +37,19 @@ clientSchema =
         pull: {"type":"boolean", "required":true}
         'tls-client': {"type":"boolean", "required":true}
         dev: {"type":"string", "required":true}
-        proto: {"type":"string", "required":true}
+        proto: {"type":"string", "required":false}
         ca: {"type":"string", "required":true}
-        dh: {"type":"string", "required":true}
+        dh: {"type":"string", "required":false}
         cert: {"type":"string", "required":true}
         key: {"type":"string", "required":true}
         remote: {"type":"string", "required":true}
         cipher: {"type":"string", "required":false}
         'tls-cipher': {"type":"string", "required":false}
+        'remote-random': {"type":"boolean", "required":false}
+        'resolv-retry': {"type":"string", "required":false}
+        ping: {"type":"number", "required":false}
+        'ping-restart': {"type":"number", "required":false}
+        log: {"type":"string", "required":false}
         route:
             items: { type: "string" }
         push:
