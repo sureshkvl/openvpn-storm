@@ -37,14 +37,19 @@ clientSchema =
         pull: {"type":"boolean", "required":true}
         'tls-client': {"type":"boolean", "required":true}
         dev: {"type":"string", "required":true}
-        proto: {"type":"string", "required":true}
+        proto: {"type":"string", "required":false}
         ca: {"type":"string", "required":true}
-        dh: {"type":"string", "required":true}
+        dh: {"type":"string", "required":false}
         cert: {"type":"string", "required":true}
         key: {"type":"string", "required":true}
         remote: {"type":"string", "required":true}
         cipher: {"type":"string", "required":false}
         'tls-cipher': {"type":"string", "required":false}
+        'remote-random': {"type":"boolean", "required":false}
+        'resolv-retry': {"type":"string", "required":false}
+        ping: {"type":"number", "required":false}
+        'ping-restart': {"type":"number", "required":false}
+        log: {"type":"string", "required":false}
         route:
             items: { type: "string" }
         push:
@@ -180,7 +185,7 @@ class vpnlib
         fileops.createFile filename, (result) ->
             return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
             fileops.updateFile filename, config
-            exec "touch /config/#{service}/on"
+            exec "touch /config/#{service}/on"            
             try
                 idb.set instance.id, instance, ->
                     console.log "#{instance.id} added to OpenVPN service configuration"
@@ -209,8 +214,8 @@ class vpnlib
                 '''
                 TODO: implement a module to act on service
                 '''
-                exec "svcs #{service} sync"
-
+                console.log "exec : monit restart #{service}"
+                exec "monit restart #{service}"
                 db.user.set id, body, ->
                     console.log "#{id} added to OpenVPN service configuration"
                     console.log body

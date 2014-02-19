@@ -7,19 +7,19 @@ vpnlib = require './vpnlib'
     configpath = "/config/openvpn"
   
     validateClientSchema = ->
-        result = validate @body, vpn.clientSchema
+        result = validate @body, vpnlib.clientSchema
         console.log result
         return @next new Error "Invalid openvpn client configuration posting!: #{result.errors}" unless result.valid
         @next()
 
     validateServerSchema = ->
-        result = validate @body, vpn.serverSchema
+        result = validate @body, vpnlib.serverSchema
         console.log result
         return @next new Error "Invalid openvpn server configuration posting!: #{result.errors}" unless result.valid
         @next()
 
     validateUser = ->
-        result = validate @body, vpn.userSchema
+        result = validate @body, vpnlib.userSchema
         console.log result
         return @next new Error "Invalid openvpn user configuration posting!: #{result.errors}" unless result.valid
         @next()

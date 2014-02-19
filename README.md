@@ -159,11 +159,6 @@ Post openvpn server configuration
 
 
 
-
-
-
-Upon error, error code 500 will be returned
-
 Post openvpn client configuration
 ----------------------------------
 
@@ -261,8 +256,6 @@ Add a User to VPN
     }
 
 
-Upon error, error code 500 will be returned
-
 
 Delete a User from VPN
 ----------------------
@@ -271,13 +264,16 @@ Delete a User from VPN
     DELETE	/openvpn/server/:id/users/:user	   Delete user from client-config-directory
 
 
-On Success returns 200 with JSON data
-
 **Example Request and Response**
 
 ### Response JSON
 
-    { deleted: true }
+    Status Code: 204 No Content
+    Connection: keep-alive
+    Date: Mon, 27 Jan 2014 05:36:48 GMT
+    X-Powered-By: Express
+
+
 
 Describe openvpn
 ----------------
@@ -458,16 +454,14 @@ Delete client configuration
     DELETE	openvpn/client/:client	   Delete user from client-config-directory
 
 
-On Success returns 200 with JSON data
-
 **Example Request and Response**
 
 
 ### Response JSON    
 
-    {
-       "deleted": true
-    }
+    Status Code: 204 No Content
+    Connection: keep-alive
+
 
 
 Delete server configuration
@@ -477,14 +471,11 @@ Delete server configuration
     DELETE	openvpn/server/:server	   Delete user from client-config-directory
 
 
-On Success returns 200 with JSON data
-
 **Example Request and Response**
 
 ### Response JSON    
 
-    {
-       "deleted": true
-    }
+    Status Code: 204 No Content
+    Connection: keep-alive
 
 
