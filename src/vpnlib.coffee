@@ -1,81 +1,11 @@
-# validation is used by other modules
-fileops = require 'fileops'
-validate = require('json-schema').validate
-exec = require('child_process').exec
-uuid = require 'node-uuid'
+StormAgent= require('stormagent')
+StormData = require('stormagent').StormData
+StormRegistry = require('stormagent').StormRegistry
 
-@db = db =
-    server: require('dirty') '/tmp/openvpnservers.db'
-    client: require('dirty') '/tmp/openvpnclients.db'
-    user: require('dirty') '/tmp/openvpnusers.db'
-
-db.user.on 'load', ->
-    console.log 'loaded openvpnusers.db'
-    db.user.forEach (key,val) ->
-        console.log 'found ' + key
-
-@lookup = lookup = (id) ->
-    console.log "looking up user ID: #{id}"
-    entry = db.user.get id
-    if entry
-
-        if userschema?
-            console.log 'performing schema validation on retrieved user entry'
-            result = validate entry, userschema
-            console.log result
-            return new Error "Invalid user retrieved: #{result.errors}" unless result.valid
-
-        return entry
-    else
-        return new Error "No such user ID: #{id}"
-
-clientSchema =
-    name: "openvpn"
-    type: "object"
-    additionalProperties: false
-    properties:
-        pull: {"type":"boolean", "required":true}
-        'tls-client': {"type":"boolean", "required":true}
-        dev: {"type":"string", "required":true}
-        proto: {"type":"string", "required":false}
-        ca: {"type":"string", "required":true}
-        dh: {"type":"string", "required":false}
-        cert: {"type":"string", "required":true}
-        key: {"type":"string", "required":true}
-        remote: {"type":"string", "required":true}
-        cipher: {"type":"string", "required":false}
-        'tls-cipher': {"type":"string", "required":false}
-        'remote-random': {"type":"boolean", "required":false}
-        'resolv-retry': {"type":"string", "required":false}
-        ping: {"type":"number", "required":false}
-        'ping-restart': {"type":"number", "required":false}
-        log: {"type":"string", "required":false}
-        route:
-            items: { type: "string" }
-        push:
-            items: { type: "string" }
-        'persist-key': {"type":"boolean", "required":false}
-        'persist-tun': {"type":"boolean", "required":false}
-        status: {"type":"string", "required":false}
-        'comp-lzo': {"type":"string", "required":false}
-        verb: {"type":"number", "required":false}
-        mlock: {"type":"boolean", "required":false}
-
-userSchema =
-        name: "openvpn"
-        type: "object"
-        additionalProperties: false
-        properties:
-            id:    { type: "string", required: true }
-            email: { type: "string", required: false}
-            cname: { type: "string", required: false}
-            push:
-                items: { type: "string" }
-
-
+class VpnServerData extends StormData
 
     # testing openvpn validation with test schema
-serverSchema =
+    serverSchema =
         name: "openvpn"
         type: "object"
         additionalProperties: false
@@ -120,11 +50,48 @@ serverSchema =
             verb:                {"type":"number", "required":false}
             mlock:               {"type":"boolean", "required":false}
 
-            
+    constructor: (id, data) ->
+        super id, data, schema
 
-class vpnlib
-    constructor:  ->
+
+class VpnUserData extends StormData
+
+    userSchema =
+        name: "openvpn"
+        type: "object"
+        additionalProperties: false
+        properties:
+            id:    { type: "string", required: true }
+            email: { type: "string", required: false}
+            cname: { type: "string", required: false}
+            push:
+                items: { type: "string" }
+
+    constructor: (id, data) ->
+        super id, data, schema
+
+
+
+class vpnlib extends StormAgent
+
+    fileops = require 'fileops'
+    validate = require('json-schema').validate
+    exec = require('child_process').exec
+    uuid = require 'node-uuid'
+
+    @db = db =
+    server: require('dirty') '/tmp/openvpnservers.db'
+    client: require('dirty') '/tmp/openvpnclients.db'
+    user: require('dirty') '/tmp/openvpnusers.db'
+
+    constructor:(config) ->
+
+        super config
+        # key routine to import itself into agent base
+        @import module
+
         console.log 'vpnlib initialized'
+
         @clientdb = db.client
         @serverdb = db.server
         @serverdb.on 'load', ->
