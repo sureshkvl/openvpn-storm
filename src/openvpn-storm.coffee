@@ -51,7 +51,7 @@ class VpnServerData extends StormData
             mlock:               {"type":"boolean", "required":false}
 
     constructor: (id, data) ->
-        super id, data, schema
+        super id, data, serverSchema
 
 
 class VpnUserData extends StormData
@@ -68,7 +68,7 @@ class VpnUserData extends StormData
                 items: { type: "string" }
 
     constructor: (id, data) ->
-        super id, data, schema
+        super id, data, userSchema
 
 
 
@@ -80,12 +80,11 @@ class vpnlib extends StormAgent
     uuid = require 'node-uuid'
 
     @db = db =
-    server: require('dirty') '/tmp/openvpnservers.db'
-    client: require('dirty') '/tmp/openvpnclients.db'
-    user: require('dirty') '/tmp/openvpnusers.db'
+        server: require('dirty') '/tmp/openvpnservers.db'
+        client: require('dirty') '/tmp/openvpnclients.db'
+        user: require('dirty') '/tmp/openvpnusers.db'
 
     constructor:(config) ->
-
         super config
         # key routine to import itself into agent base
         @import module
@@ -357,6 +356,13 @@ class vpnlib extends StormAgent
                 status.emit 'end'
 
 module.exports = vpnlib
-module.exports.clientSchema = clientSchema
-module.exports.serverSchema = serverSchema
-module.exports.userSchema = userSchema
+module.exports.VpnServerData = VpnServerData
+module.exports.VpnUserData = VpnUserData
+
+
+if require.main is module
+    config = null
+    storm = null # override during dev 
+    agent = new vpnlib config
+    agent.run storm
+              

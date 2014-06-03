@@ -1,7 +1,7 @@
 @include = ->        
 
-    vpnserverdata=require('./vpnlib').VpnServerData
-    vpnuserdata=require('./vpnlib').VpnUserData
+    vpnserverdata=require('./openvpn-storm').VpnServerData
+    vpnuserdata=require('./openvpn-storm').VpnUserData
     #vpn = new vpnlib
     vpnagent = @settings.agent
     configpath = "/config/openvpn"
@@ -29,7 +29,7 @@
     	vpnagent.new (new vpnserverdata null,@body)
     	instance = vpnagent.new @body
     	filename = configpath + "/" + "#{instance.id}.conf"
-    	vpnagent.configvpn instance, filename, vpn.serverdb, (res) =>
+    	vpnagent.configvpn instance, filename, vpnagent.serverdb, (res) =>
     		unless res instanceof Error
     			@send instance	
     		else
