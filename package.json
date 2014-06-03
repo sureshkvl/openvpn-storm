@@ -2,7 +2,7 @@
   "name": "openvpn-storm",
   "description": "openvpn-storm is a easy to use module that exposes endpoints to configure openvpn on any linux system",
   "author": "Ravi Chunduru",
-  "version": "0.1.11",
+  "version": "0.1.14",
   "repository": {
      "type": "git",
      "url": "git://github.com/stormstack/openvpn-storm.git"
@@ -21,8 +21,8 @@
   },
   "stormflash": {
     "packages": [
-      "apt://repo.intercloud.net/openvpn",
-      "apt://repo.intercloud.net/spawnvpn"
+      "apt://repo.dev.intercloud.net/openvpn",
+      "apt://repo.dev.intercloud.net/spawnvpn"
     ],
     "services": [
       "openvpn.*"
@@ -31,24 +31,25 @@
   },
   "main": "./lib/openvpn-storm",
   "config": {
-  "logfile": "/var/log/openvpn-storm.log",
-  "storm": {
-  "plugins": [
-             "lib/plugin"
-  		]
-   }
-   },
-   "scripts": {
-   "prepublish": "mkdir -p lib; coffee -o lib -c src",
-   "start": "node --expose-gc lib/openvpn-storm"
-   },
+      "logfile": "/var/log/openvpn-storm.log",
+      "storm": {
+          "plugins": [
+              "lib/plugin"
+  		  ]
+      }
+  },
+  "scripts": {
+      "prepublish": "mkdir -p lib; coffee -o lib -c src",
+      "start": "node --expose-gc lib/openvpn-storm"
+  },
   "devDependencies": {},
   "optionalDependencies": {},
   "keywords": ["openvpn", "vpn"],
   "contributors": [
-	  "Peter.K.Lee <plee@clearpathnet.com",
-          "Badri Narayanan <badrinarayananb@calsoftlabs.com",
+      "Peter.K.Lee <plee@clearpathnet.com",
+      "Badri Narayanan <badrinarayananb@calsoftlabs.com",
 	  "Geetha R <geethar@calsoftlabs.com",
-	  "Suresh Kumar <sureshkumar.s@calsoftlabs.com"
+	  "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
+	  "Sivaprasath Busa <sbusa@clearpathnet.com>"
    ]
 }
