@@ -2,7 +2,7 @@
   "name": "openvpn-storm",
   "description": "openvpn-storm is a easy to use module that exposes endpoints to configure openvpn on any linux system",
   "author": "Ravi Chunduru",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "repository": {
      "type": "git",
      "url": "git://github.com/stormstack/openvpn-storm.git"
@@ -21,15 +21,15 @@
   },
   "stormflash": {
     "packages": [
-      "apt://repo.dev.intercloud.net/openvpn",
-      "apt://repo.dev.intercloud.net/spawnvpn"
+      "apt-get://repo.dev.intercloud.net/openvpn",
+      "apt-get://repo.dev.intercloud.net/spawnvpn"
     ],
     "services": [
       "openvpn.*"
     ],
-    "plugin": "plugin.coffee"
+    "plugin": "lib/plugin"
   },
-  "main": "./lib/openvpn-storm",
+  "main": "./lib/openvpn",
   "config": {
       "logfile": "/var/log/openvpn-storm.log",
       "storm": {
@@ -40,7 +40,6 @@
   },
   "scripts": {
       "prepublish": "mkdir -p lib; coffee -o lib -c src",
-      "start": "node --expose-gc lib/openvpn-storm"
   },
   "devDependencies": {},
   "optionalDependencies": {},
@@ -48,8 +47,8 @@
   "contributors": [
       "Peter.K.Lee <plee@clearpathnet.com",
       "Badri Narayanan <badrinarayananb@calsoftlabs.com",
-	  "Geetha R <geethar@calsoftlabs.com",
-	  "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
-	  "Sivaprasath Busa <sbusa@clearpathnet.com>"
+      "Geetha R <geethar@calsoftlabs.com",
+      "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
+      "Sivaprasath Busa <sbusa@clearpathnet.com>"
    ]
 }
