@@ -74,7 +74,8 @@ class VpnUserData extends StormData
 
 class vpnlib extends StormAgent
 
-    fileops = require 'fileops'
+    #fileops = require 'fileops'
+    fs = require 'fs'
     validate = require('json-schema').validate
     exec = require('child_process').exec
     uuid = require 'node-uuid'
@@ -148,17 +149,18 @@ class vpnlib extends StormAgent
                 when "boolean"
                     config += key + "\n"
         console.log 'writing vpn config onto file' + filename
-        fileops.createFile filename, (result) ->
-            return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
-            fileops.updateFile filename, config
-            exec "touch /config/#{service}/on"            
-            try
-                idb.set instance.id, instance, ->
-                    console.log "#{instance.id} added to OpenVPN service configuration"
-                callback({result:true})
-            catch err
-                console.log err
-                callback(err)
+        #fileops.createFile filename, (result) ->
+        fs.writeFileSync filename,config
+        #return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
+        #fileops.updateFile filename, config
+        exec "touch /config/#{service}/on"
+        try
+            idb.set instance.id, instance, ->
+                console.log "#{instance.id} added to OpenVPN service configuration"
+            callback({result:true})
+        catch err
+            console.log err
+            callback(err)
 
 
     addUser: (body, filename, callback) ->
@@ -173,21 +175,22 @@ class vpnlib extends StormAgent
                             config += "#{key} \"#{i}\"\n" if key is "push"
 
         id = body.id
-        fileops.createFile filename, (err) ->
-            return new Error "Unable to create configuration file #{filename}!" if err instanceof Error
-            fileops.updateFile filename, config
-            try
-                '''
-                TODO: implement a module to act on service
-                '''
-                console.log "exec : monit restart #{service}"
-                exec "monit restart #{service}"
-                db.user.set id, body, ->
-                    console.log "#{id} added to OpenVPN service configuration"
-                    console.log body
-                callback({result: true })
-            catch err
-                callback(err)
+        #fileops.createFile filename, (err) ->
+        #    return new Error "Unable to create configuration file #{filename}!" if err instanceof Error
+        fs.writeFileSync filename,config
+        #    fileops.updateFile filename, config
+        try
+            '''
+            TODO: implement a module to act on service
+            '''
+            console.log "exec : monit restart #{service}"
+            #exec "monit restart #{service}"
+            db.user.set id, body, ->
+                console.log "#{id} added to OpenVPN service configuration"
+                console.log body
+            callback({result: true })
+        catch err
+            callback(err)
 
     delInstance: (id, idb, filename, callback) ->
         entry = idb.get id
@@ -195,7 +198,8 @@ class vpnlib extends StormAgent
         #spawnvpn takes care of killing openvpn instance.
         #To keep it generic, we need to call service module to stop this process
         #service module should have mapping with id to process id
-        fileops.removeFile filename, (err) =>
+        #fileops.removeFile filename, (err) =>
+        fs.unlink filename, (err)=>
             console.log 'result of removing file '  + err
             unless err instanceof Error
                 idb.rm id, =>
@@ -206,6 +210,7 @@ class vpnlib extends StormAgent
                 callback (error)
 
     delUser: (userid, ccdpath, callback) ->
+        path = require 'path'
         entry = db.user.get userid
 
         try
@@ -216,22 +221,23 @@ class vpnlib extends StormAgent
                 file = entry.cname
             filename = "#{ccdpath}" + "/#{file}"
             console.log "removing user config on #{filename}..."
-            fileops.fileExists filename, (exists) ->
-                if not exists
-                    console.log 'file removed already'
-                    err = new Error "user is already removed!"
-                    callback(err)
-                else
-                    console.log 'remove the file'
-                    fileops.removeFile filename, (err) ->
-                        if err
-                            callback(err)
-                        else
-                            console.log 'removed file'
-
-                        db.user.rm userid, ->
-                            console.log "removed VPN user ID: #{userid}"
-                        callback(true)
+            #fileops.fileExists filename, (exists) ->
+            exists = path.existsSync filename
+            if not exists
+                console.log 'file removed already'
+                err = new Error "user is already removed!"
+                callback(err)
+            else
+                console.log 'remove the file'
+                #fileops.removeFile filename, (err) ->
+                fs.unlink filename, (err) ->
+                    if err
+                        callback(err)
+                    else
+                        console.log 'removed file'
+                    db.user.rm userid, ->
+                        console.log "removed VPN user ID: #{userid}"
+                    callback(true)
         catch err
             callback(err)
 
