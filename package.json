@@ -19,6 +19,16 @@
   "engines": {
     "node": ">=0.6.x"
   },
+  "stormflash": {
+    "packages": [
+      "apt://repo.intercloud.net/openvpn",
+      "apt://repo.intercloud.net/spawnvpn"
+    ],
+    "services": [
+      "openvpn.*"
+    ],
+    "plugin": "plugin.coffee"
+  },
   "main": "./lib/openvpn-storm",
   "config": {
   "logfile": "/var/log/openvpn-storm.log",
