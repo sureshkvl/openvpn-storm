@@ -39,7 +39,7 @@
       }
   },
   "scripts": {
-      "prepublish": "mkdir -p lib; coffee -o lib -c src",
+      "prepublish": "mkdir -p lib; coffee -o lib -c src"
   },
   "devDependencies": {},
   "optionalDependencies": {},
