@@ -1,6 +1,6 @@
-openvpn = require './openvpn'
-@include = ->        
-
+openvpnclass = require './openvpn'
+@include = ->
+    openvpn = new openvpnclass
     vpnserverdata=require('./openvpn').VpnServerData
     vpnuserdata=require('./openvpn').VpnUserData
     #vpn = new vpnlib
