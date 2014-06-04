@@ -14,6 +14,7 @@ openvpnclass = require './openvpn'
         monitor:true
 
     openvpninstance = new StormInstance "openvpn", instance
+    ###
     res = vpnagent.instances.add "openvpn", openvpninstance
     console.log "result to add instance", res
   
@@ -23,8 +24,7 @@ openvpnclass = require './openvpn'
     stopvpn = ->
         vpnagent.stop "openvpn", (result) =>
             console.log "result of stopping procesS", result
-
-    ###  
+    
     validateClientSchema = ->
         result = validate @body, vpnlib.clientSchema
         console.log result
@@ -43,14 +43,14 @@ openvpnclass = require './openvpn'
         return @next new Error "Invalid openvpn user configuration posting!: #{result.errors}" unless result.valid
         @next()
 
-    ###    
+    ###
     @post '/openvpn/server': ->
     	openvpn.new (new vpnserverdata null,@body)
     	instance = openvpn.new @body
     	filename = configpath + "/" + "#{instance.id}.conf"
     	openvpn.configvpn instance, filename, openvpn.serverdb, (res) =>
             unless res instanceof Error
-                @startvpn()
+                #@startvpn()
                 @send instance	
             else
                 next new Error "Invalid openvpn server posting! #{res}"	
