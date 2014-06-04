@@ -5,7 +5,27 @@ openvpnclass = require './openvpn'
     vpnuserdata=require('./openvpn').VpnUserData
     #vpn = new vpnlib
     vpnagent = @settings.agent
+    StormInstance = require('../../stormflash/src/stormflash').StormInstance
     configpath = "/config/openvpn"
+
+    instance=
+        name:"openvpn"
+        path:"/usr/sbin/spawnvpn"
+        monitor:true
+
+    openvpninstance = new StormInstance "openvpn", instance
+    res = vpnagent.instances.add "openvpn", openvpninstance
+    console.log "result to add instance", res
+    #agent.instances.get "testserver", (instance) =>
+    #    console.log "response to get ", instance
+  
+    startvpn = ->
+        vpnagent.start "openvpn", (result, error) =>
+            console.log "result of starting procesS", result, error
+    stopvpn = ->
+        vpnagent.stop "openvpn", (result) =>
+            console.log "result of stopping procesS", result
+
     ###  
     validateClientSchema = ->
         result = validate @body, vpnlib.clientSchema
@@ -32,7 +52,9 @@ openvpnclass = require './openvpn'
     	filename = configpath + "/" + "#{instance.id}.conf"
     	openvpn.configvpn instance, filename, openvpn.serverdb, (res) =>
     		unless res instanceof Error
-    			@send instance	
+                        #starting the openvpn
+                        @startvpn()
+                        @send instance	
     		else
     			next new Error "Invalid openvpn server posting! #{res}"	
     	###
@@ -96,6 +118,7 @@ openvpnclass = require './openvpn'
     @get '/openvpn/server': ->
         #get list of server instances from the DB
         res = openvpn.listServers()
+        @stopvpn()
         @send res
 
     ###
