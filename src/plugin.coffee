@@ -37,7 +37,7 @@ openvpn = require './openvpn'
 
             
     @get '/openvpn/server/:id': ->
-        vpn.servers.get @params.id, (res) =>
+        vpn.getServerbyID @params.id, (res) =>
             unless res instanceof Error
                 @send res
             else
@@ -45,7 +45,7 @@ openvpn = require './openvpn'
 
 
     @get '/openvpn/server': ->
-        vpn.servers.list (res) =>
+        vpn.listServers (res) =>
             unless res instanceof Error
                 @send res
             else

@@ -190,12 +190,52 @@ class Openvpn
         exec "touch /config/#{service}/on"
         callback filename
                                                                                                                                                                                                                                                                                             #
+    listServers:(callback)->
+        @servers.list (res) =>
+            callback(res)
+
+    getServerbyID:(id, callback)->
+        @servers.get id ,(res) =>
+            callback(res)
+
     deleteserver: (id, callback) ->
 
+
     adduser: (serverid, user, callback) ->
+        file =  if user.email then user.email else user.cname
+        @getServerbyID serverid (res) =>
+            unless res instanceof Error
+                ccdpath = res.val.client-config-dir
+                filename = ccdpath + "/" + "#{file}"
 
-
+                service = "openvpn"
+                config = ''
+                for key, val of user
+                    switch (typeof val)
+                        when "object"
+                            if val instanceof Array
+                                for i in val
+                                    config += "#{key} #{i}\n" if key is "iroute"
+                                    config += "#{key} \"#{i}\"\n" if key is "push"
+                id = user.id
+                fs.writeFileSync filename,config
+                ###
+                try
+                    '''
+                    TODO: implement a module to act on service
+                    '''
+                    console.log "exec : monit restart #{service}"
+            
+                    db.user.set id, user, ->
+                        console.log "#{id} added to OpenVPN service configuration"
+                        console.log user
+                    callback({result: true })
+                catch err
+                    callback(err)
+                ###
     deleteuser: (serverid, userid, callback) ->
+          
+
 
     ###
     getCcdPath: (entry) ->
