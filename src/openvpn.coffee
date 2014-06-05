@@ -149,7 +149,7 @@ class Openvpn
             # monitor option must be derived from package.json
             serverInfo =
                 "name": "openvpn"
-                "path": "/user/sbin"
+                "path": "/usr/sbin"
                 "monitor": false
                 "args": [ "--config", "#{configFile}"]
 
@@ -188,7 +188,7 @@ class Openvpn
         console.log 'writing vpn config onto file' + filename
         fs.writeFileSync filename,config
         exec "touch /config/#{service}/on"
-        callback server
+        callback filename
                                                                                                                                                                                                                                                                                             #
     deleteserver: (id, callback) ->
 
