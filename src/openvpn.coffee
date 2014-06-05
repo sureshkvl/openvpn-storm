@@ -1,14 +1,15 @@
 StormData = require('stormagent').StormData
-#StormRegistry = require('stormagent').StormRegistry
+StormRegistry = require('stormagent').StormRegistry
 
-class VpnServerData extends StormData
+class ServerData extends StormData
 
     # testing openvpn validation with test schema
     serverSchema =
         name: "openvpn"
         type: "object"
-        additionalProperties: false
+        additionalProperties: true
         properties:
+            id:                 {"type":"string", "required":false}
             port:                {"type":"number", "required":true}
             dev:                 {"type":"string", "required":true}
             proto:               {"type":"string", "required":true}
@@ -52,8 +53,33 @@ class VpnServerData extends StormData
     constructor: (id, data) ->
         super id, data, serverSchema
 
+#---------------------------------------------------------------------
 
-class VpnUserData extends StormData
+class Servers extends StormRegistry
+    constructor: (filename) ->
+        @on 'load', (key,val) ->
+            entry = new StormPackage key,val
+            if entry?
+                entry.saved = true
+                @add key, entry
+
+        @on 'removed', (key) ->
+            # an entry is removed in Registry
+        super filename
+
+
+    get: (key) ->
+        entry = super key
+        return unless entry?
+        if entry.data? and entry.data instanceof ServerData
+            entry.data.id = entry.id
+            entry.data
+        else
+            entry
+
+#----------------------------------------------------------------------
+
+class UserData extends StormData
 
     userSchema =
         name: "openvpn"
@@ -69,11 +95,35 @@ class VpnUserData extends StormData
     constructor: (id, data) ->
         super id, data, userSchema
 
+#------------------------------------------------------------------------
+
+class Users extends StormRegistry
+
+    constructor: (filename) ->
+        @on 'load', (key,val) ->
+            entry = new StormPackage key,val
+            if entry?
+                entry.saved = true
+                @add key, entry
+
+        @on 'removed', (key) ->
+            # an entry is removed in Registry
+        super filename
 
 
-class openvpn 
+    get: (key) ->
+        entry = super key
+        return unless entry?
+        if entry.data? and entry.data instanceof UserData
+            entry.data.id = entry.id
+            entry.data
+        else
+            entry
 
-    #fileops = require 'fileops'
+#-----------------------------------------------------------------------------
+
+class Openvpn
+
     fs = require 'fs'
     validate = require('json-schema').validate
     exec = require('child_process').exec
@@ -84,21 +134,70 @@ class openvpn
         client: require('dirty') '/tmp/openvpnclients.db'
         user: require('dirty') '/tmp/openvpnusers.db'
 
-    constructor:(config) ->
-        console.log 'openvpn initialized'
+    constructor: (@settings) ->
 
-        @clientdb = db.client
-        @serverdb = db.server
-        @serverdb.on 'load', ->
-            console.log 'loaded openvpnserver.db'
-            @forEach (key,val) ->
-                console.log 'found ' + key
-        @clientdb.on 'load', ->
-            console.log 'loaded openvpnclient.db'
-            @forEach (key,val) ->
-                console.log 'found ' + key
-        console.log 'dbs ' + @clientdb + @serverdb
+        #XXX check feasibility to get plugin dir from settings
+        fs.mkdir "/var/stormflash/plugins/openvpn", () ->
+        @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
+        @users = new Users "/var/stormflash/plugins/openvpn/users.db"
+        @config = "/config/openvpn"
 
+
+    addserver: (server, callback) ->
+        @generateConfig server, (configFile) =>
+            # XXX must discover location of openvpn binary
+            # monitor option must be derived from package.json
+            serverInfo =
+                "name": "openvpn"
+                "path": "/user/sbin"
+                "monitor": false
+                "args": [ "--config", "#{configFile}"]
+
+            data = @settings.agent.newInstance null, serverInfo
+            serverInstance = @settings.agent.instances.add data.id, data
+
+            # Start the server Instance
+            @settings.agent.start serverInstance.id, (key, pid) =>
+                @settings.agent.log "Server Instance result ", key, pid
+                callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
+
+                #server.key = key
+                #server.pid = pid
+                configData = new ServerData null, server
+                result = @servers.add configData.id, configData
+
+                callback result.data
+
+    generateConfig: (server, callback) ->
+        service = "openvpn"
+        config = ''
+        for key, val of server
+           switch (typeof val)
+               when "object"
+                   if val instanceof Array
+                       for i in val
+                           config += "#{key} #{i}\n" if key is "route"
+                           config += "#{key} \"#{i}\"\n" if key is "push"
+               when "number", "string"
+                   config += key + ' ' + val + "\n"
+               when "boolean"
+                   config += key + "\n"
+
+        server.id = uuid.v4()
+        filename = @config + "/" + server.id + ".conf"
+        console.log 'writing vpn config onto file' + filename
+        fs.writeFileSync filename,config
+        exec "touch /config/#{service}/on"
+        callback server
+                                                                                                                                                                                                                                                                                            #
+    deleteserver: (id, callback) ->
+
+    adduser: (serverid, user, callback) ->
+
+
+    deleteuser: (serverid, userid, callback) ->
+
+    ###
     getCcdPath: (entry) ->
         console.log entry.config
         return entry.config["client-config-dir"]
@@ -355,7 +454,6 @@ class openvpn
             stream.on 'error', (error) ->
                 console.log error
                 status.emit 'end'
+    ###
 
-module.exports = openvpn
-module.exports.VpnServerData = VpnServerData
-module.exports.VpnUserData = VpnUserData
+module.exports = Openvpn
