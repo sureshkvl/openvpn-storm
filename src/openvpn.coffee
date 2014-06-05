@@ -58,7 +58,7 @@ class ServerData extends StormData
 class Servers extends StormRegistry
     constructor: (filename) ->
         @on 'load', (key,val) ->
-            entry = new StormPackage key,val
+            entry = new ServerData key,val
             if entry?
                 entry.saved = true
                 @add key, entry
@@ -101,7 +101,7 @@ class Users extends StormRegistry
 
     constructor: (filename) ->
         @on 'load', (key,val) ->
-            entry = new StormPackage key,val
+            entry = new UserData key,val
             if entry?
                 entry.saved = true
                 @add key, entry
