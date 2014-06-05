@@ -150,7 +150,7 @@ class Openvpn
             serverInfo =
                 "name": "openvpn"
                 "path": "/usr/sbin"
-                "monitor": false
+                "monitor": true
                 "args": [ "--config", "#{configFile}"]
 
             data = @settings.agent.newInstance null, serverInfo
