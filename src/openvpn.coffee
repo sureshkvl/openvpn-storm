@@ -191,35 +191,37 @@ class Openvpn
         callback filename
                                                                                                                                                                                                                                                                                             #
     listServers:(callback)->
-        @servers.list (res) =>
-            callback(res)
+        callback @servers.list()
 
     getServerbyID:(id, callback)->
-        @servers.get id ,(res) =>
-            callback(res)
+        callback @servers.get id 
 
     deleteserver: (id, callback) ->
 
 
     adduser: (serverid, user, callback) ->
         file =  if user.email then user.email else user.cname
-        @getServerbyID serverid (res) =>
-            unless res instanceof Error
-                ccdpath = res.val.client-config-dir
-                filename = ccdpath + "/" + "#{file}"
+        res = @servers.get serverid
+        callback new Error "Error: Unknown Server instance" unless res?
+        ccdpath = res.data["client-config-dir"]   
+        filename = ccdpath + "/" + "#{file}"            
+        service = "openvpn"
+        config = ''
+        for key, val of user
+            switch (typeof val)
+                when "object"
+                    if val instanceof Array
+                        for i in val
+                            config += "#{key} #{i}\n" if key is "iroute"
+                            config += "#{key} \"#{i}\"\n" if key is "push"
+        id = user.id
+        console.log filename
+        fs.writeFileSync filename,config
 
-                service = "openvpn"
-                config = ''
-                for key, val of user
-                    switch (typeof val)
-                        when "object"
-                            if val instanceof Array
-                                for i in val
-                                    config += "#{key} #{i}\n" if key is "iroute"
-                                    config += "#{key} \"#{i}\"\n" if key is "push"
-                id = user.id
-                fs.writeFileSync filename,config
-                ###
+        configData = new UserData null, user
+        result = @users.add configData.id, configData
+        callback(configData)
+        ###
                 try
                     '''
                     TODO: implement a module to act on service
@@ -232,7 +234,7 @@ class Openvpn
                     callback({result: true })
                 catch err
                     callback(err)
-                ###
+        ###
     deleteuser: (serverid, userid, callback) ->
           
 
