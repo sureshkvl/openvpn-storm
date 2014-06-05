@@ -153,7 +153,7 @@ class Openvpn
                 "monitor": true
                 "args": [ "--config", "#{configFile}"]
 
-            data = @settings.agent.newInstance null, serverInfo
+            data = @settings.agent.newInstance serverInfo
             serverInstance = @settings.agent.instances.add data.id, data
 
             # Start the server Instance
@@ -189,12 +189,12 @@ class Openvpn
         fs.writeFileSync filename,config
         exec "touch /config/#{service}/on"
         callback filename
-                                                                                                                                                                                                                                                                                            #
+    
     listServers:(callback)->
         callback @servers.list()
 
     getServerbyID:(id, callback)->
-        callback @servers.get id 
+        callback @servers.get id
 
     deleteserver: (id, callback) ->
 
@@ -203,8 +203,8 @@ class Openvpn
         file =  if user.email then user.email else user.cname
         res = @servers.get serverid
         callback new Error "Error: Unknown Server instance" unless res?
-        ccdpath = res.data["client-config-dir"]   
-        filename = ccdpath + "/" + "#{file}"            
+        ccdpath = res.data["client-config-dir"]
+        filename = ccdpath + "/" + "#{file}"
         service = "openvpn"
         config = ''
         for key, val of user
