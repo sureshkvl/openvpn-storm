@@ -154,10 +154,10 @@ class Openvpn
                 "args": [ "--config", "#{configFile}"]
 
             data = @settings.agent.newInstance serverInfo
-            serverInstance = @settings.agent.instances.add data.id, data
-
+            @serverInstance = @settings.agent.instances.add data.id, data
+                
             # Start the server Instance
-            @settings.agent.start serverInstance.id, (key, pid) =>
+            @settings.agent.start @serverInstance.id, (key, pid) =>
                 @settings.agent.log "Server Instance result ", key, pid
                 callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
 
@@ -204,6 +204,7 @@ class Openvpn
         res = @servers.get serverid
         callback new Error "Error: Unknown Server instance" unless res?
         ccdpath = res.data["client-config-dir"]
+        fs.mkdirSync "#{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
         service = "openvpn"
         config = ''
@@ -217,9 +218,12 @@ class Openvpn
         id = user.id
         console.log filename
         fs.writeFileSync filename,config
-
         configData = new UserData null, user
         result = @users.add configData.id, configData
+        #restart the openvpn server
+        @settings.agent.restart @serverInstance.id, (key, pid) =>
+            console.log "restarted"
+
         callback(configData)
         ###
                 try
