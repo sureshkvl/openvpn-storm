@@ -1,85 +1,15 @@
-# validation is used by other modules
-fileops = require 'fileops'
-validate = require('json-schema').validate
-exec = require('child_process').exec
-uuid = require 'node-uuid'
+StormData = require('stormagent').StormData
+StormRegistry = require('stormagent').StormRegistry
 
-@db = db =
-    server: require('dirty') '/tmp/openvpnservers.db'
-    client: require('dirty') '/tmp/openvpnclients.db'
-    user: require('dirty') '/tmp/openvpnusers.db'
-
-db.user.on 'load', ->
-    console.log 'loaded openvpnusers.db'
-    db.user.forEach (key,val) ->
-        console.log 'found ' + key
-
-@lookup = lookup = (id) ->
-    console.log "looking up user ID: #{id}"
-    entry = db.user.get id
-    if entry
-
-        if userschema?
-            console.log 'performing schema validation on retrieved user entry'
-            result = validate entry, userschema
-            console.log result
-            return new Error "Invalid user retrieved: #{result.errors}" unless result.valid
-
-        return entry
-    else
-        return new Error "No such user ID: #{id}"
-
-clientSchema =
-    name: "openvpn"
-    type: "object"
-    additionalProperties: false
-    properties:
-        pull: {"type":"boolean", "required":true}
-        'tls-client': {"type":"boolean", "required":true}
-        dev: {"type":"string", "required":true}
-        proto: {"type":"string", "required":false}
-        ca: {"type":"string", "required":true}
-        dh: {"type":"string", "required":false}
-        cert: {"type":"string", "required":true}
-        key: {"type":"string", "required":true}
-        remote: {"type":"string", "required":true}
-        cipher: {"type":"string", "required":false}
-        'tls-cipher': {"type":"string", "required":false}
-        'remote-random': {"type":"boolean", "required":false}
-        'resolv-retry': {"type":"string", "required":false}
-        ping: {"type":"number", "required":false}
-        'ping-restart': {"type":"number", "required":false}
-        log: {"type":"string", "required":false}
-        route:
-            items: { type: "string" }
-        push:
-            items: { type: "string" }
-        'persist-key': {"type":"boolean", "required":false}
-        'persist-tun': {"type":"boolean", "required":false}
-        status: {"type":"string", "required":false}
-        'comp-lzo': {"type":"string", "required":false}
-        verb: {"type":"number", "required":false}
-        mlock: {"type":"boolean", "required":false}
-
-userSchema =
-        name: "openvpn"
-        type: "object"
-        additionalProperties: false
-        properties:
-            id:    { type: "string", required: true }
-            email: { type: "string", required: false}
-            cname: { type: "string", required: false}
-            push:
-                items: { type: "string" }
-
-
+class ServerData extends StormData
 
     # testing openvpn validation with test schema
-serverSchema =
+    serverSchema =
         name: "openvpn"
         type: "object"
-        additionalProperties: false
+        additionalProperties: true
         properties:
+            id:                 {"type":"string", "required":false}
             port:                {"type":"number", "required":true}
             dev:                 {"type":"string", "required":true}
             proto:               {"type":"string", "required":true}
@@ -120,23 +50,200 @@ serverSchema =
             verb:                {"type":"number", "required":false}
             mlock:               {"type":"boolean", "required":false}
 
+    constructor: (id, data) ->
+        super id, data, serverSchema
+
+#---------------------------------------------------------------------
+
+class Servers extends StormRegistry
+    constructor: (filename) ->
+        @on 'load', (key,val) ->
+            entry = new ServerData key,val
+            if entry?
+                entry.saved = true
+                @add key, entry
+
+        @on 'removed', (key) ->
+            # an entry is removed in Registry
+        super filename
+
+
+    get: (key) ->
+        entry = super key
+        return unless entry?
+        if entry.data? and entry.data instanceof ServerData
+            entry.data.id = entry.id
+            entry.data
+        else
+            entry
+
+#----------------------------------------------------------------------
+
+class UserData extends StormData
+
+    userSchema =
+        name: "openvpn"
+        type: "object"
+        additionalProperties: false
+        properties:
+            id:    { type: "string", required: true }
+            email: { type: "string", required: false}
+            cname: { type: "string", required: false}
+            push:
+                items: { type: "string" }
+
+    constructor: (id, data) ->
+        super id, data, userSchema
+
+#------------------------------------------------------------------------
+
+class Users extends StormRegistry
+
+    constructor: (filename) ->
+        @on 'load', (key,val) ->
+            entry = new UserData key,val
+            if entry?
+                entry.saved = true
+                @add key, entry
+
+        @on 'removed', (key) ->
+            # an entry is removed in Registry
+        super filename
+
+
+    get: (key) ->
+        entry = super key
+        return unless entry?
+        if entry.data? and entry.data instanceof UserData
+            entry.data.id = entry.id
+            entry.data
+        else
+            entry
+
+#-----------------------------------------------------------------------------
+
+class Openvpn
+
+    fs = require 'fs'
+    validate = require('json-schema').validate
+    exec = require('child_process').exec
+    uuid = require 'node-uuid'
+
+    @db = db =
+        server: require('dirty') '/tmp/openvpnservers.db'
+        client: require('dirty') '/tmp/openvpnclients.db'
+        user: require('dirty') '/tmp/openvpnusers.db'
+
+    constructor: (@settings) ->
+
+        #XXX check feasibility to get plugin dir from settings
+        fs.mkdir "/var/stormflash/plugins/openvpn", () ->
+        @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
+        @users = new Users "/var/stormflash/plugins/openvpn/users.db"
+        @config = "/config/openvpn"
+
+
+    addserver: (server, callback) ->
+        @generateConfig server, (configFile) =>
+            # XXX must discover location of openvpn binary
+            # monitor option must be derived from package.json
+            serverInfo =
+                "name": "openvpn"
+                "path": "/usr/sbin"
+                "monitor": true
+                "args": [ "--config", "#{configFile}"]
+
+            data = @settings.agent.newInstance serverInfo
+            @serverInstance = @settings.agent.instances.add data.id, data
+                
+            # Start the server Instance
+            @settings.agent.start @serverInstance.id, (key, pid) =>
+                @settings.agent.log "Server Instance result ", key, pid
+                callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
+
+                #server.key = key
+                #server.pid = pid
+                configData = new ServerData null, server
+                result = @servers.add configData.id, configData
+
+                callback result.data
+
+    generateConfig: (server, callback) ->
+        service = "openvpn"
+        config = ''
+        for key, val of server
+           switch (typeof val)
+               when "object"
+                   if val instanceof Array
+                       for i in val
+                           config += "#{key} #{i}\n" if key is "route"
+                           config += "#{key} \"#{i}\"\n" if key is "push"
+               when "number", "string"
+                   config += key + ' ' + val + "\n"
+               when "boolean"
+                   config += key + "\n"
+
+        server.id = uuid.v4()
+        filename = @config + "/" + server.id + ".conf"
+        console.log 'writing vpn config onto file' + filename
+        fs.writeFileSync filename,config
+        exec "touch /config/#{service}/on"
+        callback filename
+    
+    listServers:(callback)->
+        callback @servers.list()
+
+    getServerbyID:(id, callback)->
+        callback @servers.get id
+
+    deleteserver: (id, callback) ->
+
+
+    adduser: (serverid, user, callback) ->
+        file =  if user.email then user.email else user.cname
+        res = @servers.get serverid
+        callback new Error "Error: Unknown Server instance" unless res?
+        ccdpath = res.data["client-config-dir"]
+        fs.mkdirSync "#{ccdpath}"
+        filename = ccdpath + "/" + "#{file}"
+        service = "openvpn"
+        config = ''
+        for key, val of user
+            switch (typeof val)
+                when "object"
+                    if val instanceof Array
+                        for i in val
+                            config += "#{key} #{i}\n" if key is "iroute"
+                            config += "#{key} \"#{i}\"\n" if key is "push"
+        id = user.id
+        console.log filename
+        fs.writeFileSync filename,config
+        configData = new UserData null, user
+        result = @users.add configData.id, configData
+        #restart the openvpn server
+        @settings.agent.restart @serverInstance.id, (key, pid) =>
+            console.log "restarted"
+
+        callback(configData)
+        ###
+                try
+                    '''
+                    TODO: implement a module to act on service
+                    '''
+                    console.log "exec : monit restart #{service}"
             
+                    db.user.set id, user, ->
+                        console.log "#{id} added to OpenVPN service configuration"
+                        console.log user
+                    callback({result: true })
+                catch err
+                    callback(err)
+        ###
+    deleteuser: (serverid, userid, callback) ->
+          
 
-class vpnlib
-    constructor:  ->
-        console.log 'vpnlib initialized'
-        @clientdb = db.client
-        @serverdb = db.server
-        @serverdb.on 'load', ->
-            console.log 'loaded openvpnserver.db'
-            @forEach (key,val) ->
-                console.log 'found ' + key
-        @clientdb.on 'load', ->
-            console.log 'loaded openvpnclient.db'
-            @forEach (key,val) ->
-                console.log 'found ' + key
-        console.log 'dbs ' + @clientdb + @serverdb
 
+    ###
     getCcdPath: (entry) ->
         console.log entry.config
         return entry.config["client-config-dir"]
@@ -182,17 +289,18 @@ class vpnlib
                 when "boolean"
                     config += key + "\n"
         console.log 'writing vpn config onto file' + filename
-        fileops.createFile filename, (result) ->
-            return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
-            fileops.updateFile filename, config
-            exec "touch /config/#{service}/on"            
-            try
-                idb.set instance.id, instance, ->
-                    console.log "#{instance.id} added to OpenVPN service configuration"
-                callback({result:true})
-            catch err
-                console.log err
-                callback(err)
+        #fileops.createFile filename, (result) ->
+        fs.writeFileSync filename,config
+        #return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
+        #fileops.updateFile filename, config
+        exec "touch /config/#{service}/on"
+        try
+            idb.set instance.id, instance, ->
+                console.log "#{instance.id} added to OpenVPN service configuration"
+            callback({result:true})
+        catch err
+            console.log err
+            callback(err)
 
 
     addUser: (body, filename, callback) ->
@@ -207,21 +315,22 @@ class vpnlib
                             config += "#{key} \"#{i}\"\n" if key is "push"
 
         id = body.id
-        fileops.createFile filename, (err) ->
-            return new Error "Unable to create configuration file #{filename}!" if err instanceof Error
-            fileops.updateFile filename, config
-            try
-                '''
-                TODO: implement a module to act on service
-                '''
-                console.log "exec : monit restart #{service}"
-                exec "monit restart #{service}"
-                db.user.set id, body, ->
-                    console.log "#{id} added to OpenVPN service configuration"
-                    console.log body
-                callback({result: true })
-            catch err
-                callback(err)
+        #fileops.createFile filename, (err) ->
+        #    return new Error "Unable to create configuration file #{filename}!" if err instanceof Error
+        fs.writeFileSync filename,config
+        #    fileops.updateFile filename, config
+        try
+            '''
+            TODO: implement a module to act on service
+            '''
+            console.log "exec : monit restart #{service}"
+            #exec "monit restart #{service}"
+            db.user.set id, body, ->
+                console.log "#{id} added to OpenVPN service configuration"
+                console.log body
+            callback({result: true })
+        catch err
+            callback(err)
 
     delInstance: (id, idb, filename, callback) ->
         entry = idb.get id
@@ -229,7 +338,8 @@ class vpnlib
         #spawnvpn takes care of killing openvpn instance.
         #To keep it generic, we need to call service module to stop this process
         #service module should have mapping with id to process id
-        fileops.removeFile filename, (err) =>
+        #fileops.removeFile filename, (err) =>
+        fs.unlink filename, (err)=>
             console.log 'result of removing file '  + err
             unless err instanceof Error
                 idb.rm id, =>
@@ -240,6 +350,7 @@ class vpnlib
                 callback (error)
 
     delUser: (userid, ccdpath, callback) ->
+        path = require 'path'
         entry = db.user.get userid
 
         try
@@ -250,22 +361,23 @@ class vpnlib
                 file = entry.cname
             filename = "#{ccdpath}" + "/#{file}"
             console.log "removing user config on #{filename}..."
-            fileops.fileExists filename, (exists) ->
-                if not exists
-                    console.log 'file removed already'
-                    err = new Error "user is already removed!"
-                    callback(err)
-                else
-                    console.log 'remove the file'
-                    fileops.removeFile filename, (err) ->
-                        if err
-                            callback(err)
-                        else
-                            console.log 'removed file'
-
-                        db.user.rm userid, ->
-                            console.log "removed VPN user ID: #{userid}"
-                        callback(true)
+            #fileops.fileExists filename, (exists) ->
+            exists = path.existsSync filename
+            if not exists
+                console.log 'file removed already'
+                err = new Error "user is already removed!"
+                callback(err)
+            else
+                console.log 'remove the file'
+                #fileops.removeFile filename, (err) ->
+                fs.unlink filename, (err) ->
+                    if err
+                        callback(err)
+                    else
+                        console.log 'removed file'
+                    db.user.rm userid, ->
+                        console.log "removed VPN user ID: #{userid}"
+                    callback(true)
         catch err
             callback(err)
 
@@ -388,8 +500,6 @@ class vpnlib
             stream.on 'error', (error) ->
                 console.log error
                 status.emit 'end'
+    ###
 
-module.exports = vpnlib
-module.exports.clientSchema = clientSchema
-module.exports.serverSchema = serverSchema
-module.exports.userSchema = userSchema
+module.exports = Openvpn
