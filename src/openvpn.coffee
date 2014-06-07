@@ -140,7 +140,7 @@ class Openvpn
         fs.mkdir "/var/stormflash/plugins/openvpn", () ->
         @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
         @users = new Users "/var/stormflash/plugins/openvpn/users.db"
-        @config = "/config/openvpn"
+        @config = "/var/stormflash/meta"
 
 
     addserver: (server, callback) ->
@@ -187,7 +187,7 @@ class Openvpn
         filename = @config + "/" + server.id + ".conf"
         console.log 'writing vpn config onto file' + filename
         fs.writeFileSync filename,config
-        exec "touch /config/#{service}/on"
+        exec "touch /var/stormflash/meta/on"
         callback filename
     
     listServers:(callback)->
@@ -293,7 +293,7 @@ class Openvpn
         fs.writeFileSync filename,config
         #return new Error "Unable to create configuration file #{filename}!" if result instanceof Error
         #fileops.updateFile filename, config
-        exec "touch /config/#{service}/on"
+        exec "touch /var/stormflash/meta/on"
         try
             idb.set instance.id, instance, ->
                 console.log "#{instance.id} added to OpenVPN service configuration"
