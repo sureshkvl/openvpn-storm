@@ -147,11 +147,17 @@ class Openvpn
         @generateConfig server, (configFile) =>
             # XXX must discover location of openvpn binary
             # monitor option must be derived from package.json
+            out = fs.openSync '/var/log/openvpn.out', 'a'
+            err = fs.openSync '/var/log/commtouch.err', 'a'
+            env = process.env
             serverInfo =
                 "name": "openvpn"
                 "path": "/usr/sbin"
                 "monitor": true
                 "args": [ "--config", "#{configFile}"]
+                "options":
+                    env:env
+                "stdio": ['ignore', out, err]
 
             data = @settings.agent.newInstance serverInfo
             @serverInstance = @settings.agent.instances.add data.id, data

@@ -2,7 +2,7 @@
   "name": "openvpn-storm",
   "description": "openvpn-storm is a easy to use module that exposes endpoints to configure openvpn on any linux system",
   "author": "Ravi Chunduru",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "repository": {
      "type": "git",
      "url": "git://github.com/stormstack/openvpn-storm.git"
@@ -21,8 +21,8 @@
   },
   "stormflash": {
     "packages": [
-      "apt-get://repo.dev.intercloud.net/openvpn",
-      "apt-get://repo.dev.intercloud.net/spawnvpn"
+      "apt-get://openvpn",
+      "apt-get://spawnvpn"
     ],
     "services": [
       "openvpn.*"
@@ -46,9 +46,9 @@
   "keywords": ["openvpn", "vpn"],
   "contributors": [
       "Peter.K.Lee <plee@clearpathnet.com",
-      "Badri Narayanan <badrinarayananb@calsoftlabs.com",
       "Geetha R <geethar@calsoftlabs.com",
       "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
-      "Sivaprasath Busa <sbusa@clearpathnet.com>"
+      "Sivaprasath Busa <sbusa@clearpathnet.com>",
+      "Badri Narayanan <badrinarayananb@calsoftlabs.com"
    ]
 }
