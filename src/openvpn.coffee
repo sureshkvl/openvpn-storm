@@ -158,6 +158,7 @@ class Openvpn
                 "args": [ "--config", "#{configFile}"]
                 "options":
                     env:env
+                    detached:true
                     stdio: ['ignore', out, err]
 
             data = @settings.agent.newInstance serverInfo
