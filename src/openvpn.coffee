@@ -158,7 +158,7 @@ class Openvpn
                 "args": [ "--config", "#{configFile}"]
                 "options":
                     env:env
-                "stdio": ['ignore', out, err]
+                    stdio: ['ignore', out, err]
 
             data = @settings.agent.newInstance serverInfo
             @serverInstance = @settings.agent.instances.add data.id, data
