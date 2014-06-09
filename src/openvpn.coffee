@@ -129,19 +129,15 @@ class Openvpn
     exec = require('child_process').exec
     uuid = require 'node-uuid'
 
-    @db = db =
-        server: require('dirty') '/tmp/openvpnservers.db'
-        client: require('dirty') '/tmp/openvpnclients.db'
-        user: require('dirty') '/tmp/openvpnusers.db'
 
     constructor: (@settings) ->
 
         #XXX check feasibility to get plugin dir from settings
         @config = "/var/stormflash/meta"
-        exec "mkdir #{@config}"
-        exec "mkdir /var/stormflash/plugins/openvpn"
-        @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
-        @users = new Users "/var/stormflash/plugins/openvpn/users.db"
+        fs.mkdir "#{config}", (result) =>
+            fs.mkdir "/var/stormflash/plugins/openvpn", (result) =>
+                @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
+                @users = new Users "/var/stormflash/plugins/openvpn/users.db"
 
 
     addserver: (server, callback) ->
