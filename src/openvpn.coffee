@@ -174,7 +174,7 @@ class Openvpn
 
     generateConfig: (server, callback) ->
         service = "openvpn"
-        config = ''
+        config = '';
         for key, val of server
            switch (typeof val)
                when "object"
@@ -212,7 +212,7 @@ class Openvpn
         exec "mkdir #{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
         service = "openvpn"
-        config = ''
+        config = '';
         for key, val of user
             switch (typeof val)
                 when "object"
