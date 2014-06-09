@@ -137,10 +137,11 @@ class Openvpn
     constructor: (@settings) ->
 
         #XXX check feasibility to get plugin dir from settings
-        fs.mkdir "/var/stormflash/plugins/openvpn", () ->
+        @config = "/var/stormflash/meta"
+        exec "mkdir #{@config}"
+        exec "mkdir /var/stormflash/plugins/openvpn"
         @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
         @users = new Users "/var/stormflash/plugins/openvpn/users.db"
-        @config = "/var/stormflash/meta"
 
 
     addserver: (server, callback) ->
@@ -210,7 +211,8 @@ class Openvpn
         res = @servers.get serverid
         callback new Error "Error: Unknown Server instance" unless res?
         ccdpath = res.data["client-config-dir"]
-        fs.mkdirSync "#{ccdpath}"
+        #fs.mkdirSync "#{ccdpath}"
+        exec "mkdir #{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
         service = "openvpn"
         config = ''
