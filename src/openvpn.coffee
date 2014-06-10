@@ -228,8 +228,8 @@ class Openvpn
         configData = new UserData null, user
         result = @users.add configData.id, configData
         #restart the openvpn server
-        @settings.agent.restart @serverInstance.id, (key, pid) =>
-            console.log "restarted"
+        #@settings.agent.restart @serverInstance.id, (key, pid) =>
+        #    console.log "restarted"
 
         callback(configData)
         ###
