@@ -171,7 +171,11 @@ class Openvpn
                 #server.pid = pid
                 configData = new ServerData @serverid, server
                 result = @servers.add configData.id, configData
-
+                
+                #creating the ccd dir
+                ccdpath = result.data["client-config-dir"]
+                if ccdpath?
+                    exec "mkdir #{ccdpath}"
                 callback result
 
     generateConfig: (server, callback) ->
@@ -211,7 +215,7 @@ class Openvpn
         callback new Error "Error: Unknown Server instance" unless res?
         ccdpath = res.data["client-config-dir"]
         #fs.mkdirSync "#{ccdpath}"
-        exec "mkdir #{ccdpath}"
+        #exec "mkdir #{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
         service = "openvpn"
         gconfig = ''
