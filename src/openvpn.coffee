@@ -145,7 +145,7 @@ class Openvpn
             # XXX must discover location of openvpn binary
             # monitor option must be derived from package.json
             out = fs.openSync '/var/log/openvpn.out', 'a'
-            err = fs.openSync '/var/log/commtouch.err', 'a'
+            err = fs.openSync '/var/log/openvpn.err', 'a'
             env = process.env
             serverInfo =
                 "name": "openvpn"
