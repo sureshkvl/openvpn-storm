@@ -169,7 +169,7 @@ class Openvpn
 
                 #server.key = key
                 #server.pid = pid
-                configData = new ServerData null, server
+                configData = new ServerData @serverid, server
                 result = @servers.add configData.id, configData
 
                 callback result.data
@@ -189,8 +189,8 @@ class Openvpn
                when "boolean"
                    gconfig += key + "\n"
 
-        server.id = uuid.v4()
-        filename = @config + "/" + server.id + ".conf"
+        @serverid = uuid.v4()
+        filename = @config + "/" + @serverid + ".conf"
         console.log 'writing vpn config onto file' + filename
         fs.writeFileSync filename,gconfig
         exec "touch /var/stormflash/meta/on"
