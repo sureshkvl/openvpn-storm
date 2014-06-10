@@ -168,7 +168,8 @@ class Openvpn
                 callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
 
                 #server.key = key
-                #server.pid = pid
+                server.pid = pid
+                server.instanceId = @serverInstance.id
                 configData = new ServerData @serverid, server
                 result = @servers.add configData.id, configData
                 
@@ -210,7 +211,7 @@ class Openvpn
 
 
     adduser: (serverid, user, callback) ->
-        file =  if user.email then user.email else user.cname
+        file =  if user.cname then user.cname else user.email
         res = @servers.get serverid
         callback new Error "Error: Unknown Server instance" unless res?
         ccdpath = res.data["client-config-dir"]
@@ -226,30 +227,18 @@ class Openvpn
                         for i in val
                             gconfig += "#{key} #{i}\n" if key is "iroute"
                             gconfig += "#{key} \"#{i}\"\n" if key is "push"
-        id = user.id
         console.log filename
         fs.writeFileSync filename,gconfig
-        configData = new UserData null, user
+        configData = new UserData user.id, user
         result = @users.add configData.id, configData
-        #restart the openvpn server
-        #@settings.agent.restart @serverInstance.id, (key, pid) =>
-        #    console.log "restarted"
 
-        callback(configData)
-        ###
-                try
-                    '''
-                    TODO: implement a module to act on service
-                    '''
-                    console.log "exec : monit restart #{service}"
-            
-                    db.user.set id, user, ->
-                        console.log "#{id} added to OpenVPN service configuration"
-                        console.log user
-                    callback({result: true })
-                catch err
-                    callback(err)
-        ###
+        #send SIGHUP to the openvpn server
+        @settings.agent.log "existing openvpn server PId for this server instance: ", res.pid
+        exec "/bin/kill -HUP #{res.pid}", (error, stdout, stderr) =>
+            return callback new Error 'SIGUP Error for openvpn server instance' + error if error
+            @settings.agent.log 'Reloaded openvpn instance with new config'
+            return callback(configData)
+        
     deleteuser: (serverid, userid, callback) ->
           
 
