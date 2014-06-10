@@ -134,7 +134,7 @@ class Openvpn
 
         #XXX check feasibility to get plugin dir from settings
         @config = "/var/stormflash/meta"
-        fs.mkdir "#{config}", (result) =>
+        fs.mkdir "#{@config}", (result) =>
             fs.mkdir "/var/stormflash/plugins/openvpn", (result) =>
                 @servers = new Servers "/var/stormflash/plugins/openvpn/servers.db"
                 @users = new Users "/var/stormflash/plugins/openvpn/users.db"
@@ -174,23 +174,23 @@ class Openvpn
 
     generateConfig: (server, callback) ->
         service = "openvpn"
-        config = '';
+        gconfig = ''
         for key, val of server
            switch (typeof val)
                when "object"
                    if val instanceof Array
                        for i in val
-                           config += "#{key} #{i}\n" if key is "route"
-                           config += "#{key} \"#{i}\"\n" if key is "push"
+                           gconfig += "#{key} #{i}\n" if key is "route"
+                           gconfig += "#{key} \"#{i}\"\n" if key is "push"
                when "number", "string"
-                   config += key + ' ' + val + "\n"
+                   gconfig += key + ' ' + val + "\n"
                when "boolean"
-                   config += key + "\n"
+                   gconfig += key + "\n"
 
         server.id = uuid.v4()
         filename = @config + "/" + server.id + ".conf"
         console.log 'writing vpn config onto file' + filename
-        fs.writeFileSync filename,config
+        fs.writeFileSync filename,gconfig
         exec "touch /var/stormflash/meta/on"
         callback filename
     
@@ -212,17 +212,17 @@ class Openvpn
         exec "mkdir #{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
         service = "openvpn"
-        config = '';
+        gconfig = ''
         for key, val of user
             switch (typeof val)
                 when "object"
                     if val instanceof Array
                         for i in val
-                            config += "#{key} #{i}\n" if key is "iroute"
-                            config += "#{key} \"#{i}\"\n" if key is "push"
+                            gconfig += "#{key} #{i}\n" if key is "iroute"
+                            gconfig += "#{key} \"#{i}\"\n" if key is "push"
         id = user.id
         console.log filename
-        fs.writeFileSync filename,config
+        fs.writeFileSync filename,gconfig
         configData = new UserData null, user
         result = @users.add configData.id, configData
         #restart the openvpn server
