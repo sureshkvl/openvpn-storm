@@ -147,6 +147,8 @@ class Openvpn
             out = fs.openSync '/var/log/openvpn.out', 'a'
             err = fs.openSync '/var/log/openvpn.err', 'a'
             env = process.env
+            env.PATH= '/bin:/sbin:/usr/bin:/usr/sbin'
+            env.LD_LIBRARY_PATH= '/lib:/usr/lib'
             serverInfo =
                 "name": "openvpn"
                 "path": "/usr/sbin"
