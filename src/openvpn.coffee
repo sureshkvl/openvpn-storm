@@ -172,7 +172,7 @@ class Openvpn
                 configData = new ServerData @serverid, server
                 result = @servers.add configData.id, configData
 
-                callback result.data
+                callback result
 
     generateConfig: (server, callback) ->
         service = "openvpn"
