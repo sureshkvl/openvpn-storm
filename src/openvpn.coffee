@@ -150,7 +150,7 @@ class Openvpn
             serverInfo =
                 "name": "openvpn"
                 "path": "/usr/sbin"
-                "monitor": true
+                "monitor": false
                 "args": [ "--config", "#{configFile}"]
                 "options":
                     env:env
