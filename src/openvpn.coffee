@@ -141,7 +141,12 @@ class Openvpn
 
 
     addserver: (server, callback) ->
-        @generateConfig server, (configFile) =>
+        try
+            configData = new ServerData null, server
+        catch err
+            return callback new Error "Invalid schema! #{err}"
+            
+        @generateConfig configData, (configFile) =>
             # XXX must discover location of openvpn binary
             # monitor option must be derived from package.json
             out = fs.openSync '/var/log/openvpn.out', 'a'
@@ -165,12 +170,16 @@ class Openvpn
             # Start the server Instance
             @settings.agent.start @serverInstance.id, (key, pid) =>
                 @settings.agent.log "Server Instance result ", key, pid
-                callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
+                return callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
                 #server.key = key
-                server.pid = pid
-                server.instanceId = @serverInstance.id
-                configData = new ServerData @serverid, server
+                @settings.agent.log "pid result ", pid
+                configData.pid = pid
+                @settings.agent.log "instance result ", @serverInstance.id 
+                configData.instanceId = @serverInstance.id
+                @settings.agent.log "server id result ", configData.id
                 result = @servers.add configData.id, configData
+                
+                @settings.agent.log "printing result for openvpn server db add: ", result
                 
                 #creating the ccd dir
                 ccdpath = result.data["client-config-dir"]
@@ -182,7 +191,8 @@ class Openvpn
                         @settings.agent.log 'Error : ', err 
                 callback result
 
-    generateConfig: (server, callback) ->
+    generateConfig: (configData, callback) ->
+        server = configData.data
         service = "openvpn"
         gconfig = ''
         for key, val of server
@@ -197,11 +207,10 @@ class Openvpn
                when "boolean"
                    gconfig += key + "\n"
 
-        @serverid = uuid.v4()
-        filename = @config + "/" + @serverid + ".conf"
+        filename = @config + "/" + configData.id + ".conf"
         console.log 'writing vpn config onto file' + filename
         fs.writeFileSync filename,gconfig
-        exec "touch /var/stormflash/meta/on"
+        #exec "touch /var/stormflash/meta/on"
         callback filename
     
     listServers:(callback)->
