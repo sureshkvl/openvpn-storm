@@ -149,8 +149,8 @@ class Openvpn
         @generateConfig configData, (configFile) =>
             # XXX must discover location of openvpn binary
             # monitor option must be derived from package.json
-            out = fs.openSync '/var/log/#{configData.id}.out', 'a'
-            err = fs.openSync '/var/log/#{configData.id}.err', 'a'
+            out = fs.openSync "/var/log/openvpn_#{configData.id}.out", 'a'
+            err = fs.openSync "/var/log/openvpn_#{configData.id}.err", 'a'
             env = process.env
             env.PATH= '/bin:/sbin:/usr/bin:/usr/sbin'
             env.LD_LIBRARY_PATH= '/lib:/usr/lib'
