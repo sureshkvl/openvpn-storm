@@ -166,7 +166,6 @@ class Openvpn
             @settings.agent.start @serverInstance.id, (key, pid) =>
                 @settings.agent.log "Server Instance result ", key, pid
                 callback new Error "Failed to start openvpn server instance. Error is #{key}" if key instanceof Error
-
                 #server.key = key
                 server.pid = pid
                 server.instanceId = @serverInstance.id
@@ -176,7 +175,11 @@ class Openvpn
                 #creating the ccd dir
                 ccdpath = result.data["client-config-dir"]
                 if ccdpath?
-                    exec "mkdir #{ccdpath}"
+                    try
+                        fs.mkdir "#{@config.datadir}", () ->
+                        @settings.agent.log 'created ccd path'
+                    catch err                                           
+                        @settings.agent.log 'Error : ', err 
                 callback result
 
     generateConfig: (server, callback) ->
@@ -236,7 +239,7 @@ class Openvpn
         @settings.agent.log "existing openvpn server PId for this server instance: ", res.pid
         exec "/bin/kill -HUP #{res.pid}", (error, stdout, stderr) =>
             return callback new Error 'SIGUP Error for openvpn server instance' + error if error
-            @settings.agent.log 'Reloaded openvpn instance with new config'
+            @settings.agent.log 'Reloaded openvpn instance'
             return callback(configData)
         
     deleteuser: (serverid, userid, callback) ->
