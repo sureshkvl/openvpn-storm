@@ -176,7 +176,7 @@ class Openvpn
                 ccdpath = result.data["client-config-dir"]
                 if ccdpath?
                     try
-                        fs.mkdir "#{@config.datadir}", () ->
+                        fs.mkdir "#{ccdpath}", () ->
                         @settings.agent.log 'created ccd path'
                     catch err                                           
                         @settings.agent.log 'Error : ', err 
