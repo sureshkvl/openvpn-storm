@@ -241,7 +241,7 @@ class Openvpn
                             gconfig += "#{key} \"#{i}\"\n" if key is "push"
         console.log filename
         fs.writeFileSync filename,gconfig
-        configData = new UserData user.id, user
+        configData = new UserData null, user
         result = @users.add configData.id, configData
 
         ###
