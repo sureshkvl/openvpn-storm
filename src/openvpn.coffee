@@ -149,8 +149,8 @@ class Openvpn
         @generateConfig configData, (configFile) =>
             # XXX must discover location of openvpn binary
             # monitor option must be derived from package.json
-            out = fs.openSync '/var/log/openvpn.out', 'a'
-            err = fs.openSync '/var/log/openvpn.err', 'a'
+            out = fs.openSync '/var/log/#{configData.id}.out', 'a'
+            err = fs.openSync '/var/log/#{configData.id}.err', 'a'
             env = process.env
             env.PATH= '/bin:/sbin:/usr/bin:/usr/sbin'
             env.LD_LIBRARY_PATH= '/lib:/usr/lib'
@@ -244,12 +244,15 @@ class Openvpn
         configData = new UserData user.id, user
         result = @users.add configData.id, configData
 
-        #send SIGHUP to the openvpn server
+        ###
+        #send SIGHUP to the openvpn server - Needed when existing user config is modified, not needed for new additions
+        #Reference - https://openvpn.net/index.php/open-source/documentation/howto.html#control
         @settings.agent.log "existing openvpn server PId for this server instance: ", res.pid
         exec "/bin/kill -HUP #{res.pid}", (error, stdout, stderr) =>
             return callback new Error 'SIGUP Error for openvpn server instance' + error if error
             @settings.agent.log 'Reloaded openvpn instance'
-            return callback(configData)
+        ###
+        return callback(configData)
         
     deleteuser: (serverid, userid, callback) ->
           
