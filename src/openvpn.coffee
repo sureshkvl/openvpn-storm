@@ -1,5 +1,5 @@
-StormData = require('stormagent').StormData
-StormRegistry = require('stormagent').StormRegistry
+StormData = require('stormdata')
+StormRegistry = require('stormregistry')
 
 class ServerData extends StormData
 
