@@ -1,5 +1,4 @@
 node_modules/
-lib/*.js
 tests/*.js
 _site
 vendor
