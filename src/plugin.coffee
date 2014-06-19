@@ -29,7 +29,7 @@ async = require 'async'
         tasks = {}
         for user in users
             tasks[user.id] = (callback) ->
-                vpn.adduser serverId, user, (res) =>
+                vpn.adduser serverId, user, (res) ->
                     unless res instanceof Error
                         callback null, res
                     else
@@ -37,11 +37,7 @@ async = require 'async'
 
         async.parallel tasks, (err, results) =>
             return @next err if err?
-
-            unless results? and results.length > 0
-                @next new Error "Unable to add openvpn users!"
-            else
-                @send results
+            @send results
 
     @del '/openvpn/server/:id/users/:user': ->
         vpn.deleteuser @params.id, @params.user,  (res) =>
@@ -49,8 +45,6 @@ async = require 'async'
                 @send 204
             else
                 @next new Error "Failed to delete openvpn user ! #{res}"
-
-
 
     @get '/openvpn/server/:id': ->
         vpn.getServerbyID @params.id, (res) =>
