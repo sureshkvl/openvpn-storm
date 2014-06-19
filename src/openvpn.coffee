@@ -174,7 +174,7 @@ class Openvpn
                 #server.key = key
                 @settings.agent.log "pid result ", pid
                 configData.pid = pid
-                @settings.agent.log "instance result ", @serverInstance.id 
+                @settings.agent.log "instance result ", @serverInstance.id
                 configData.instanceId = @serverInstance.id
                 @settings.agent.log "server id result ", configData.id
                 result = @servers.add configData.id, configData
@@ -187,8 +187,8 @@ class Openvpn
                     try
                         fs.mkdir "#{ccdpath}", () ->
                         @settings.agent.log 'created ccd path'
-                    catch err                                           
-                        @settings.agent.log 'Error : ', err 
+                    catch err
+                        @settings.agent.log 'Error : ', err
                 callback result
 
     generateConfig: (configData, callback) ->
@@ -223,13 +223,19 @@ class Openvpn
 
 
     adduser: (serverid, user, callback) ->
+        try
+            configData = new UserData null, user
+        catch err
+            return callback err
+
         file =  if user.cname then user.cname else user.email
         res = @servers.get serverid
-        callback new Error "Error: Unknown Server instance" unless res?
-        ccdpath = res.data["client-config-dir"]
+        return callback new Error "Error: Unknown Server instance" unless res?
+        ccdpath = res["client-config-dir"]
         #fs.mkdirSync "#{ccdpath}"
         #exec "mkdir #{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
+        @log "Debug: adduser() - file is #{file}, ccdpath is #{ccdpath} and res is ", res
         service = "openvpn"
         gconfig = ''
         for key, val of user
@@ -239,9 +245,8 @@ class Openvpn
                         for i in val
                             gconfig += "#{key} #{i}\n" if key is "iroute"
                             gconfig += "#{key} \"#{i}\"\n" if key is "push"
-        console.log filename
+        console.log "filename for ccd generated is ", filename
         fs.writeFileSync filename,gconfig
-        configData = new UserData null, user
         result = @users.add configData.id, configData
 
         ###
