@@ -21,13 +21,15 @@ async = require 'async'
 
 
     @post '/openvpn/server/:server/users': ->
+        serverId = @params.server
         users = @body
-        users = [ users ] unless users instanceof Array
+        return @send 400 unless serverId? and users?
 
+        users = [ users ] unless users instanceof Array
         tasks = {}
         for user in users
-            tasks[user.id] = (callback) =>
-                vpn.adduser @params.server, @body, (res) =>
+            tasks[user.id] = (callback) ->
+                vpn.adduser serverId, user, (res) =>
                     unless res instanceof Error
                         callback null, res
                     else
@@ -37,7 +39,7 @@ async = require 'async'
             return @next err if err?
 
             unless results? and results.length > 0
-                @next "Unable to add openvpn users!"
+                @next new Error "Unable to add openvpn users!"
             else
                 @send results
 
