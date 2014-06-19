@@ -84,9 +84,9 @@ class UserData extends StormData
     userSchema =
         name: "openvpn"
         type: "object"
-        additionalProperties: false
+        additionalProperties: true
         properties:
-            id:    { type: "string", required: true }
+            id:    { type: "string", required: false}
             email: { type: "string", required: false}
             cname: { type: "string", required: false}
             push:
@@ -224,18 +224,18 @@ class Openvpn
 
     adduser: (serverid, user, callback) ->
         try
-            configData = new UserData null, user
+            configData = new UserData user.id, user
         catch err
             return callback err
 
         file =  if user.cname then user.cname else user.email
         res = @servers.get serverid
-        return callback new Error "Error: Unknown Server instance" unless res?
-        ccdpath = res["client-config-dir"]
+        return callback new Error "Error: Unknown Server instance" unless res
+        ccdpath = res.data["client-config-dir"]
         #fs.mkdirSync "#{ccdpath}"
         #exec "mkdir #{ccdpath}"
         filename = ccdpath + "/" + "#{file}"
-        @log "Debug: adduser() - file is #{file}, ccdpath is #{ccdpath} and res is ", res
+        @settings.agent.log "Debug: adduser() - file is #{file}, ccdpath is #{ccdpath} and res is ", res
         service = "openvpn"
         gconfig = ''
         for key, val of user
