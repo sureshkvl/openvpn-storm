@@ -2,20 +2,19 @@
   "name": "openvpn-storm",
   "description": "openvpn-storm is a easy to use module that exposes endpoints to configure openvpn on any linux system",
   "author": "Ravi Chunduru",
-  "version": "0.3.12",
+  "version": "0.3.13",
   "repository": {
-     "type": "git",
-     "url": "git://github.com/stormstack/openvpn-storm.git"
+    "type": "git",
+    "url": "git://github.com/stormstack/openvpn-storm.git"
   },
   "dependencies": {
-    "stormdata": ">=1.2.0",
-  	"stormregistry": ">=1.2.0",
-    "fileops":"0.1.3",
+    "async": "^0.9.0",
     "json-schema": "0.2.0",
-    "dirty":"0.9.x",
-    "lazy":"1.0.x",
+    "lazy": "1.0.x",
     "node-uuid": "1.3.x",
-    "path":"x"
+    "path": "x",
+    "stormdata": ">=1.2.0",
+    "stormregistry": ">=1.2.0"
   },
   "engines": {
     "node": ">=0.6.x"
@@ -32,24 +31,27 @@
   },
   "main": "./lib/openvpn",
   "config": {
-      "logfile": "/var/log/openvpn-storm.log",
-      "storm": {
-          "plugins": [
-              "lib/plugin"
-  		  ]
-      }
+    "logfile": "/var/log/openvpn-storm.log",
+    "storm": {
+      "plugins": [
+        "lib/plugin"
+      ]
+    }
   },
   "scripts": {
-      "prepublish": "mkdir -p lib; coffee -o lib -c src"
+    "prepublish": "mkdir -p lib; coffee -o lib -c src"
   },
   "devDependencies": {},
   "optionalDependencies": {},
-  "keywords": ["openvpn", "vpn"],
+  "keywords": [
+    "openvpn",
+    "vpn"
+  ],
   "contributors": [
-      "Peter.K.Lee <plee@clearpathnet.com",
-      "Geetha R <geethar@calsoftlabs.com",
-      "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
-      "Sivaprasath Busa <sbusa@clearpathnet.com>",
-      "Badri Narayanan <badrinarayananb@calsoftlabs.com"
-   ]
+    "Peter.K.Lee <plee@clearpathnet.com",
+    "Geetha R <geethar@calsoftlabs.com",
+    "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
+    "Sivaprasath Busa <sbusa@clearpathnet.com>",
+    "Badri Narayanan <badrinarayananb@calsoftlabs.com"
+  ]
 }
