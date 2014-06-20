@@ -28,12 +28,13 @@ async = require 'async'
         users = [ users ] unless users instanceof Array
         tasks = {}
         for user in users
-            tasks[user.id] = (callback) ->
-                vpn.adduser serverId, user, (res) ->
-                    unless res instanceof Error
-                        callback null, res
-                    else
-                        callback "Failed to add openvpn user! #{res}"
+            do (user) ->
+                tasks[user.id] = (callback) ->
+                    vpn.adduser serverId, user, (res) ->
+                        unless res instanceof Error
+                            callback null, res
+                        else
+                            callback "Failed to add openvpn user! #{res}"
 
         async.parallel tasks, (err, results) =>
             return @next err if err?
