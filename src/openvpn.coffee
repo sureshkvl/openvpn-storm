@@ -260,6 +260,7 @@ class Openvpn
         return callback(configData)
         
     deleteuser: (serverid, userid, callback) ->
+        path = require 'path'
         res = @servers.get serverid
         user = @users.get userid
         callback new  Error "Invalid Input"  unless res? and user?
