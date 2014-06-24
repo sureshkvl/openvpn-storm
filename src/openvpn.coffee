@@ -260,8 +260,25 @@ class Openvpn
         return callback(configData)
         
     deleteuser: (serverid, userid, callback) ->
-          
-
+        res = @servers.get serverid
+        user = @users.get userid
+        callback new  Error "Invalid Input"  unless res? and user?
+        ccdpath = res.data["client-config-dir"]
+        file =  if user.cname then user.cname else user.email
+        filename = ccdpath + "/" + "#{file}"
+        exists = path.existsSync filename
+        if not exists
+            console.log 'file removed already'
+            err = new Error "user is already removed!"
+            callback(err)
+        fs.unlink filename, (err) ->
+            if err
+                callback(err)
+            else
+                console.log 'removed file'
+                #delete the user from db
+                @users.remove userid
+                callback(true)
 
     ###
     getCcdPath: (entry) ->
