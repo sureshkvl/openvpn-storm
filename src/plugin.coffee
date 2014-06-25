@@ -1,40 +1,71 @@
-openvpn = require './openvpn'
+OpenvpnService = require './openvpn-serivce'
+OpenvpnServerRegistry = require './openvpn-registry'.OpenvpnServerRegistry
+OpenvpnUserRegistry = require './openvpn-registry'.OpenvpnUserRegistry
 
-async = require 'async'
 
 @include = ->
-    vpn = new openvpn @settings
+    agent = @settings.agent
+    unless agent?
+        throw  new Error "this plugin requires to be running in the context of a valid StormAgent!"
+
+    plugindir = @settings.plugindir
+    plugindir ?= "/var/stormflash/plugins"
+
+    serverRegistry = new OpenvpnServerRegistry plugindir+"/openvpn-servers.db"
+    userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
+
+    serverRegistry.on 'ready', ->
+        for service in @list()
+            continue unless service instanceof OpenvpnService
+
+            agent.log "restore: trying to recover:", service
+            do (service) -> service.generate (err) ->
+                if err?
+                    return agent.log "restore: openvpn #{service.id} failed to generate configs!"
+                agent.invoke service, (err, instance) ->
+                    if err?
+                        agent.log "restore: openvpn #{service.id} invoke failed with:", err
+                    else
+                        agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
+
 
     @post '/openvpn/server': ->
-    	vpn.addserver @body, (res) =>
-            unless res instanceof Error
-                @send res
-            else
-                @next new Error "Invalid openvpn server posting! #{res}"
+        try
+            service = new OpenvpnService null, @body, {}
+        catch err
+            return @next err
+
+        service.generate (err, results) =>
+            return @next err if err?
+            agent.log "POST /openvpn/server generation results:", results
+            serverRegistry.add service
+            agent.invoke service, (err, instance) =>
+                return @next err if err?
+                @send {id: service.id, running: true}
 
     @del '/openvpn/server/:server': ->
-        vpn.deleteserver @params.server, (res) =>
-            unless res instanceof Error
-                @send 204
-            else
-                @next new Error "Failed to delete openvpn server! #{res}"
+        service = serverRegistry.get @param.server
+        return @send 404 unless service?
+
+        registry.remove @param.server
+        @send 204
 
 
     @post '/openvpn/server/:server/users': ->
         serverId = @params.server
         users = @body
-        return @send 400 unless serverId? and users?
+        server = serverRegistry.get serverId
+        return @send 400 unless serverId? and users? and server?
 
         users = [ users ] unless users instanceof Array
         tasks = {}
         for user in users
             do (user) ->
                 tasks[user.id] = (callback) ->
-                    vpn.adduser serverId, user, (res) ->
-                        unless res instanceof Error
-                            callback null, res
-                        else
-                            callback "Failed to add openvpn user! #{res}"
+                    user.ccdPath = server["client-config-dir"]
+                    entry = userRegistry.add user
+                    userRegistry.addUser entry.data
+                    callback "Failed to add openvpn user! #{entry.data}"
 
         async.parallel tasks, (err, results) =>
             return @next err if err?
@@ -43,23 +74,18 @@ async = require 'async'
     @del '/openvpn/server/:id/users/:user': ->
         vpn.deleteuser @params.id, @params.user,  (res) =>
             unless res instanceof Error
-                @send res
+                @send 204
             else
                 @next new Error "Failed to delete openvpn user ! #{res}"
 
     @get '/openvpn/server/:id': ->
-        vpn.getServerbyID @params.id, (res) =>
-            unless res instanceof Error
-                @send res
-            else
-                @next new Error "Failed to get openvpn server! #{res}"
-
+        service = serverRegistry.get @param.id
+        unless service?
+            @send 404
+        else
+            @send service
 
     @get '/openvpn/server': ->
-        vpn.listServers (res) =>
-            unless res instanceof Error
-                @send res
-            else
-                @next new Error "Failed to list openvpn servers! #{res}"
+        @send serverRegistry.list()
 
 
