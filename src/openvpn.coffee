@@ -265,7 +265,6 @@ class Openvpn
         ulist = @users.list()
         if ulist
             for entry in ulist
-                @log "Debug: checking for ", entry.data
                 user = entry if entry and entry.data and entry.data.cname is userid
         return callback new  Error "Invalid Input" unless res and user
         ccdpath = res.data["client-config-dir"]
