@@ -265,19 +265,24 @@ class Openvpn
         user = @users.get userid
         return callback new  Error "Invalid Input" unless res and user
         ccdpath = res.data["client-config-dir"]
-        file =  if user.cname then user.cname else user.email
+        cname = user.data["cname"]
+        email = user.data["email"]
+        file =  if cname then cname else email
         filename = ccdpath + "/" + "#{file}"
+        #@settings.agent.log "user filename to remove: #{filename}"
         exists = path.existsSync filename
         if not exists
             console.log 'file removed already'
+            @settings.agent.log 'file removed already'
             return callback new Error "user is already removed!"
-        fs.unlink filename, (err) ->
+        fs.unlink filename, (err) =>
             if err
                 callback(err)
             else
                 console.log 'removed file'
                 #delete the user from db
                 @users.remove userid
+                #@settings.agent.log "user id removed: #{userid}"
                 callback(true)
 
     ###
@@ -379,7 +384,7 @@ class Openvpn
         fs.unlink filename, (err)=>
             console.log 'result of removing file '  + err
             unless err instanceof Error
-                idb.rm id, =>
+                db.rm id, =>
                     console.log "removed VPN client ID: #{id}"
                 callback(true)
             else
