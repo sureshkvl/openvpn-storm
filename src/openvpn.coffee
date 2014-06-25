@@ -145,7 +145,7 @@ class Openvpn
             configData = new ServerData null, server
         catch err
             return callback new Error "Invalid schema! #{err}"
-            
+
         @generateConfig configData, (configFile) =>
             # XXX must discover location of openvpn binary
             # monitor option must be derived from package.json
@@ -166,7 +166,7 @@ class Openvpn
 
             data = @settings.agent.newInstance serverInfo
             @serverInstance = @settings.agent.instances.add data.id, data
-                
+
             # Start the server Instance
             @settings.agent.start @serverInstance.id, (key, pid) =>
                 @settings.agent.log "Server Instance result ", key, pid
@@ -178,9 +178,9 @@ class Openvpn
                 configData.instanceId = @serverInstance.id
                 @settings.agent.log "server id result ", configData.id
                 result = @servers.add configData.id, configData
-                
+
                 @settings.agent.log "printing result for openvpn server db add: ", result
-                
+
                 #creating the ccd dir
                 ccdpath = result.data["client-config-dir"]
                 if ccdpath?
@@ -212,7 +212,7 @@ class Openvpn
         fs.writeFileSync filename,gconfig
         #exec "touch /var/stormflash/meta/on"
         callback filename
-    
+
     listServers:(callback)->
         callback @servers.list()
 
@@ -258,10 +258,32 @@ class Openvpn
             @settings.agent.log 'Reloaded openvpn instance'
         ###
         return callback(configData)
-        
-    deleteuser: (serverid, userid, callback) ->
-          
 
+    deleteuser: (serverid, userid, callback) ->
+        path = require 'path'
+        res = @servers.get serverid
+        user = @users.get userid
+        return callback new  Error "Invalid Input" unless res and user
+        ccdpath = res.data["client-config-dir"]
+        cname = user.data["cname"]
+        email = user.data["email"]
+        file =  if cname then cname else email
+        filename = ccdpath + "/" + "#{file}"
+        #@settings.agent.log "user filename to remove: #{filename}"
+        exists = path.existsSync filename
+        if not exists
+            console.log 'file removed already'
+            @settings.agent.log 'file removed already'
+            return callback new Error "user is already removed!"
+        fs.unlink filename, (err) =>
+            if err
+                callback(err)
+            else
+                console.log 'removed file'
+                #delete the user from db
+                @users.remove userid
+                #@settings.agent.log "user id removed: #{userid}"
+                callback(true)
 
     ###
     getCcdPath: (entry) ->
@@ -362,7 +384,7 @@ class Openvpn
         fs.unlink filename, (err)=>
             console.log 'result of removing file '  + err
             unless err instanceof Error
-                idb.rm id, =>
+                db.rm id, =>
                     console.log "removed VPN client ID: #{id}"
                 callback(true)
             else
