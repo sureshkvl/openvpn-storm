@@ -43,7 +43,7 @@ async = require 'async'
     @del '/openvpn/server/:id/users/:user': ->
         vpn.deleteuser @params.id, @params.user,  (res) =>
             unless res instanceof Error
-                @send 204
+                @send res
             else
                 @next new Error "Failed to delete openvpn user ! #{res}"
 

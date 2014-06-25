@@ -262,7 +262,11 @@ class Openvpn
     deleteuser: (serverid, userid, callback) ->
         path = require 'path'
         res = @servers.get serverid
-        user = @users.get userid
+        ulist = @users.list()
+        if ulist
+            for entry in ulist
+                @log "Debug: checking for ", entry.data
+                user = entry if entry and entry.data and entry.data.cname is userid
         return callback new  Error "Invalid Input" unless res and user
         ccdpath = res.data["client-config-dir"]
         cname = user.data["cname"]
@@ -281,8 +285,7 @@ class Openvpn
             else
                 console.log 'removed file'
                 #delete the user from db
-                @users.remove userid
-                #@settings.agent.log "user id removed: #{userid}"
+                @users.remove user.id
                 callback(true)
 
     ###
