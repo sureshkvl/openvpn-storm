@@ -62,7 +62,7 @@ class UserData extends StormData
 
 #------------------------------------------------------------------------
 
-class Users extends StormRegistry
+class VpnUserRegistry extends StormRegistry
 
     constructor: (filename) ->
         @on 'load', (key,val) ->
@@ -102,4 +102,4 @@ class Users extends StormRegistry
         fs.writeFileSync filename,gconfig
 
 module.exports.VpnServerRegistry  = VpnServerRegistry
-module.exports.VpnUserRegistry  = Users 
+module.exports.VpnUserRegistry  = VpnUserRegistry 

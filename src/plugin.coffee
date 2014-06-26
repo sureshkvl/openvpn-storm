@@ -1,6 +1,6 @@
 OpenvpnService = require './openvpn-serivce'
-OpenvpnServerRegistry = require './openvpn-registry'.OpenvpnServerRegistry
-OpenvpnUserRegistry = require './openvpn-registry'.OpenvpnUserRegistry
+OpenvpnServerRegistry = require './openvpn-registry'.VpnServerRegistry
+OpenvpnUserRegistry = require './openvpn-registry'.VpnUserRegistry
 
 
 @include = ->
