@@ -1,7 +1,7 @@
-OpenvpnService = require './openvpn-serivce'
-OpenvpnServerRegistry = require './openvpn-registry'.VpnServerRegistry
-OpenvpnUserRegistry = require './openvpn-registry'.VpnUserRegistry
-
+OpenvpnService = require './openvpn-service'
+OpenvpnServerRegistry = require('./openvpn-registry').VpnServerRegistry
+OpenvpnUserRegistry = require('./openvpn-registry').VpnUserRegistry
+async = require('async')
 
 @include = ->
     agent = @settings.agent
@@ -9,7 +9,7 @@ OpenvpnUserRegistry = require './openvpn-registry'.VpnUserRegistry
         throw  new Error "this plugin requires to be running in the context of a valid StormAgent!"
 
     plugindir = @settings.plugindir
-    plugindir ?= "/var/stormflash/plugins"
+    plugindir ?= "/var/stormflash/plugins/openvpn"
 
     serverRegistry = new OpenvpnServerRegistry plugindir+"/openvpn-servers.db"
     userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
@@ -44,10 +44,10 @@ OpenvpnUserRegistry = require './openvpn-registry'.VpnUserRegistry
                 @send {id: service.id, running: true}
 
     @del '/openvpn/server/:server': ->
-        service = serverRegistry.get @param.server
+        service = serverRegistry.get @params.server
         return @send 404 unless service?
 
-        registry.remove @param.server
+        serverRegistry.remove @params.server
         @send 204
 
 
@@ -63,7 +63,7 @@ OpenvpnUserRegistry = require './openvpn-registry'.VpnUserRegistry
             do (user) ->
                 tasks[user.id] = (callback) ->
                     user.ccdPath = server["client-config-dir"]
-                    entry = userRegistry.add user
+                    entry = userRegistry.add user.id, user
                     userRegistry.addUser entry.data
                     callback "Failed to add openvpn user! #{entry.data}"
 
@@ -79,7 +79,7 @@ OpenvpnUserRegistry = require './openvpn-registry'.VpnUserRegistry
                 @next new Error "Failed to delete openvpn user ! #{res}"
 
     @get '/openvpn/server/:id': ->
-        service = serverRegistry.get @param.id
+        service = serverRegistry.get @params.id
         unless service?
             @send 404
         else

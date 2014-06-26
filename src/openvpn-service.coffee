@@ -1,5 +1,5 @@
 StormService = require('stormservice')
-
+merge = require('fmerge')
 
 class OpenvpnService extends StormService
 
@@ -64,7 +64,7 @@ class OpenvpnService extends StormService
 
     invocation:
         name: 'openvpn'
-        path: '/usr/bin'
+        path: '/usr/sbin'
         monitor: false
         args: []
         options:
@@ -76,7 +76,7 @@ class OpenvpnService extends StormService
             @instance = data.instance
             delete data.instance
 
-        config = require('./package.json').config
+        config = require('../package.json').config
         opts ?= {}
         opts.configPath ?= config.configPath
         opts.logPath ?= config.logPath
@@ -87,7 +87,7 @@ class OpenvpnService extends StormService
             service:    filename:"#{@configPath}/#{@id}/server.conf"
 
         @invocation = merge @invocation,
-            args: [ "--config_file=#{@configs.serivce.filename}" ]
+            args: ["--config #{@configs.service.filename}"]
             options: { stdio: ["ignore", @out, @err] }
 
         @configs.service.generator = (callback) =>
