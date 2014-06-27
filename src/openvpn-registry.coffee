@@ -63,6 +63,8 @@ class UserData extends StormData
 #------------------------------------------------------------------------
 
 class VpnUserRegistry extends StormRegistry
+   
+    fs = require 'fs'
 
     constructor: (filename) ->
         @on 'load', (key,val) ->
@@ -76,7 +78,8 @@ class VpnUserRegistry extends StormRegistry
         super filename
 
         @on 'added', (entry) ->
-            @adduser entry.data
+            #Commented here as the addition is done through plugin POST call
+            #@adduser entry.data
 
     get: (key) ->
         entry = super key

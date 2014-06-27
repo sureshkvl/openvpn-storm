@@ -35,8 +35,6 @@ async = require('async')
         catch err
             return @next err
             
-        #agent.log "service info:", service
-
         service.generate (err, results) =>
             return @next err if err?
             agent.log "POST /openvpn/server generation results:", results
@@ -67,10 +65,10 @@ async = require('async')
         for user in users
             do (user) ->
                 tasks[user.id] = (callback) ->
-                    user.ccdPath = server["client-config-dir"]
+                    user.ccdpath = server.data["client-config-dir"]
                     entry = userRegistry.add user.id, user
-                    userRegistry.addUser entry.data
-                    callback "Failed to add openvpn user! #{entry.data}"
+                    userRegistry.adduser entry
+                    callback null, entry
 
         async.parallel tasks, (err, results) =>
             return @next err if err?
