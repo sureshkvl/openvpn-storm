@@ -34,14 +34,19 @@ async = require('async')
             service = new OpenvpnService null, @body, {}
         catch err
             return @next err
+            
+        #agent.log "service info:", service
 
         service.generate (err, results) =>
             return @next err if err?
             agent.log "POST /openvpn/server generation results:", results
             serverRegistry.add service
             agent.invoke service, (err, instance) =>
-                return @next err if err?
-                @send {id: service.id, running: true}
+                if err?
+                    #serverRegistry.remove service.id
+                    return @next err
+                else
+                    @send {id: service.id, running: true}
 
     @del '/openvpn/server/:server': ->
         service = serverRegistry.get @params.server

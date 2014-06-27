@@ -76,15 +76,14 @@ class OpenvpnService extends StormService
             @instance = data.instance
             delete data.instance
 
-        config = require('../package.json').config
         opts ?= {}
-        opts.configPath ?= config.configPath
-        opts.logPath ?= config.logPath
+        opts.configPath ?= "/var/stormflash/plugins/openvpn"
+        opts.logPath ?= "/var/log/openvpn"
 
         super id, data, opts
 
         @configs =
-            service:    filename:"#{@configPath}/#{@id}/server.conf"
+            service:    filename:"#{@configPath}/#{@id}.conf"
 
         @invocation = merge @invocation,
             args: ["--config #{@configs.service.filename}"]
@@ -107,8 +106,8 @@ class OpenvpnService extends StormService
 
     destructor: ->
         @eliminate()
-        @out.close()
-        @err.close()
+        #@out.close()
+        #@err.close()
         @emit 'destroy'
 
 module.exports = OpenvpnService
