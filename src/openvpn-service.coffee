@@ -65,7 +65,7 @@ class OpenvpnService extends StormService
     invocation:
         name: 'openvpn'
         path: '/usr/sbin'
-        monitor: false
+        monitor: true
         args: []
         options:
             detached: true
@@ -86,7 +86,7 @@ class OpenvpnService extends StormService
             service:    filename:"#{@configPath}/#{@id}.conf"
 
         @invocation = merge @invocation,
-            args: ["--config #{@configs.service.filename}"]
+            args: ["--config", "#{@configs.service.filename}"]
             options: { stdio: ["ignore", @out, @err] }
 
         @configs.service.generator = (callback) =>
