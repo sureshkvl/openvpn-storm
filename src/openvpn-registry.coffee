@@ -104,5 +104,23 @@ class VpnUserRegistry extends StormRegistry
         console.log "filename for ccd generated is ", filename
         fs.writeFileSync filename,gconfig
 
+    deleteuser: (server, user, callback) ->
+        path = require 'path'        
+        ccdpath = server.data["client-config-dir"]
+        cname = user["cname"]
+        email = user["email"]
+        file =  if cname then cname else email
+        filename = ccdpath + "/" + "#{file}"        
+        exists = path.existsSync filename
+        if not exists
+            console.log 'file removed already'            
+            return callback new Error "user is already removed!"
+        fs.unlink filename, (err) =>
+            if err
+                callback(err)
+            else
+                console.log 'removed file'
+                callback(true)
+
 module.exports.VpnServerRegistry  = VpnServerRegistry
 module.exports.VpnUserRegistry  = VpnUserRegistry 

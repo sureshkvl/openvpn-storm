@@ -75,11 +75,20 @@ async = require('async')
             @send results
 
     @del '/openvpn/server/:id/users/:user': ->
-        vpn.deleteuser @params.id, @params.user,  (res) =>
+        serverId = @params.id
+        userId = @params.user
+        ulist = userRegistry.list()
+        server = serverRegistry.get serverId
+        if ulist
+            for entry in ulist                
+                user = entry if entry and entry.cname is userId
+        return @send 400 unless serverId? and user? and server?
+        userRegistry.deleteuser server, user,  (res) =>
             unless res instanceof Error
-                @send 204
+                userRegistry.remove user.id
+                @send {deleted: true}
             else
-                @next new Error "Failed to delete openvpn user ! #{res}"
+                @next new Error "Failed to delete openvpn user ! #{user.id}"
 
     @get '/openvpn/server/:id': ->
         service = serverRegistry.get @params.id
