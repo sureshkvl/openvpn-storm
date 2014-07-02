@@ -1,4 +1,4 @@
-cloudflash-openvpn
+openvpn
 ===================
 
 
@@ -64,6 +64,7 @@ Post openvpn server configuration
         "cert": "/etc/identity/snap.cert",
         "key": "/etc/identity/snap.key",
         "server": "172.17.0.0 255.255.255.0",
+        "ifconfig-pool-persist": "/etc/openvpn/ip.map",
         "script-security": "3 system",
         "multihome": true,
         "management": "127.0.0.1 2020",
@@ -83,6 +84,7 @@ Post openvpn server configuration
             "route 192.168.3.0 255.255.255.0",
             "comp-lzo no"
         ],
+        "tls-timeout": 10,
         "max-clients": 254,
         "persist-key": true,
         "persist-tun": true,
@@ -93,14 +95,18 @@ Post openvpn server configuration
         "rcvbuf": 262144,
         "txqueuelen": 500,
         "replay-window": "512 15",
+        "duplicate-cn": true,
+        "log-append": "/var/log/vpn-general.log",
         "verb": 3,
         "mlock": true
     }
     
 ### Response JSON   
 
+    
+
     {
-       "id": "d6bd1f89-dfee-44a6-8863-8a0802ee7acd",
+       "id": "e06f3da5-3d1e-4eae-8647-b18cd59b418d",
        "config":
        {
            "port": 7000,
@@ -111,6 +117,7 @@ Post openvpn server configuration
            "cert": "/etc/identity/snap.cert",
            "key": "/etc/identity/snap.key",
            "server": "172.17.0.0 255.255.255.0",
+           "ifconfig-pool-persist": "/etc/openvpn/ip.map",
            "script-security": "3 system",
            "multihome": true,
            "management": "127.0.0.1 2020",
@@ -132,6 +139,7 @@ Post openvpn server configuration
                "route 192.168.3.0 255.255.255.0",
                "comp-lzo no"
            ],
+           "tls-timeout": 10,
            "max-clients": 254,
            "persist-key": true,
            "persist-tun": true,
@@ -142,15 +150,14 @@ Post openvpn server configuration
            "rcvbuf": 262144,
            "txqueuelen": 500,
            "replay-window": "512 15",
+           "duplicate-cn": true,
+           "log-append": "/var/log/vpn-general.log",
            "verb": 3,
            "mlock": true
        }
     }
 
 
-
-
-Upon error, error code 500 will be returned
 
 Post openvpn client configuration
 ----------------------------------
@@ -185,7 +192,7 @@ Post openvpn client configuration
         "comp-lzo": "no",
         "verb": 3,
         "mlock": true
-}
+    }
     
 
    
@@ -249,8 +256,6 @@ Add a User to VPN
     }
 
 
-Upon error, error code 500 will be returned
-
 
 Delete a User from VPN
 ----------------------
@@ -259,13 +264,16 @@ Delete a User from VPN
     DELETE	/openvpn/server/:id/users/:user	   Delete user from client-config-directory
 
 
-On Success returns 200 with JSON data
-
 **Example Request and Response**
 
 ### Response JSON
 
-    { deleted: true }
+    Status Code: 204 No Content
+    Connection: keep-alive
+    Date: Mon, 27 Jan 2014 05:36:48 GMT
+    X-Powered-By: Express
+
+
 
 Describe openvpn
 ----------------
@@ -446,16 +454,14 @@ Delete client configuration
     DELETE	openvpn/client/:client	   Delete user from client-config-directory
 
 
-On Success returns 200 with JSON data
-
 **Example Request and Response**
 
 
 ### Response JSON    
 
-    {
-       "deleted": true
-    }
+    Status Code: 204 No Content
+    Connection: keep-alive
+
 
 
 Delete server configuration
@@ -465,14 +471,11 @@ Delete server configuration
     DELETE	openvpn/server/:server	   Delete user from client-config-directory
 
 
-On Success returns 200 with JSON data
-
 **Example Request and Response**
 
 ### Response JSON    
 
-    {
-       "deleted": true
-    }
+    Status Code: 204 No Content
+    Connection: keep-alive
 
 
