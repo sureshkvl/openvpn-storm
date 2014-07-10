@@ -1,5 +1,6 @@
 StormService = require('stormservice')
 merge = require('fmerge')
+fs = require 'fs'
 
 class OpenvpnService extends StormService
 
@@ -79,6 +80,14 @@ class OpenvpnService extends StormService
         opts ?= {}
         opts.configPath ?= "/var/stormflash/plugins/openvpn"
         opts.logPath ?= "/var/log/openvpn"
+
+        #create ccd directory                                       
+        ccdpath = data["client-config-dir"] 
+        if ccdpath?
+            try
+                fs.mkdir "#{ccdpath}", () ->                                       
+            catch err                                              
+                #@settings.agent.log 'Error : ', err  
 
         super id, data, opts
 
