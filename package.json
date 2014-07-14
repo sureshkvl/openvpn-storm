@@ -14,7 +14,9 @@
     "node-uuid": "1.3.x",
     "path": "x",
     "stormdata": ">=1.2.0",
-    "stormregistry": "1.2.x"
+    "stormregistry": ">=1.2.0",
+    "stormservice": ">=1.0.2",
+    "fmerge":">=1.1.0"
   },
   "engines": {
     "node": ">=0.6.x"
@@ -29,7 +31,7 @@
     ],
     "plugin": "lib/plugin"
   },
-  "main": "./lib/openvpn",
+  "main": "./lib/openvpn-service",
   "config": {
     "logfile": "/var/log/openvpn-storm.log",
     "storm": {
@@ -51,7 +53,6 @@
     "Peter.K.Lee <plee@clearpathnet.com",
     "Geetha R <geethar@calsoftlabs.com",
     "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
-    "Sivaprasath Busa <sbusa@clearpathnet.com>",
-    "Badri Narayanan <badrinarayananb@calsoftlabs.com"
+    "Sivaprasath Busa <sbusa@clearpathnet.com>"
   ]
 }
