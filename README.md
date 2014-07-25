@@ -1,5 +1,11 @@
-openvpn
+openvpn-storm
 ===================
+
+Synopsis
+--------
+openvpn-storm is a storm plugin for managing the openvpn service.
+
+It provides the REST API to configure the openvpn server and start the server using stormflash framework. Also the openvpn process is monitored by the stormflash.
 
 
 *List of APIs*
@@ -35,7 +41,7 @@ openvpn
 **POST openvpn API**
 
     Verb      URI                Description
-    POST      /openvpn/server	 Create openvpn server configuration
+    POST      /openvpn/server    Create openvpn server configuration and starts the openvpn server
 
 
 **Example Request and Response**
@@ -91,8 +97,8 @@ openvpn
 
 **POST openvpn user API**
 
-    Verb	URI	        	         Description
-    POST	/openvpn/server/:server/users	 Add openvpn user.
+    Verb    URI                      Description
+    POST    /openvpn/server/:server/users    Add openvpn user.
 
 
 **Example Request and Response**
@@ -112,7 +118,7 @@ openvpn
     }
     ]
  
-### Response JSON	
+### Response JSON   
 
     {
     "439ecacc-979f-47f9-9ea0-1cc3bc7005ed": {
@@ -132,8 +138,8 @@ openvpn
 
 **GET openvpn server API**
 
-    Verb	URI	                 Description
-    GET	        /openvpn/server	         Show openvpn server configuration. 
+    Verb    URI                  Description
+    GET         /openvpn/server          Show openvpn server configuration. 
 
 **Example Request and Response**
 
@@ -221,8 +227,8 @@ openvpn
 
 **GET openvpn server API**
 
-    Verb	URI	                 Description
-    GET	        /openvpn/server/:id	 Show openvpn server configuration by ID. 
+    Verb    URI                  Description
+    GET         /openvpn/server/:id  Show openvpn server configuration by ID. 
 
 **Example Request and Response**
 
@@ -308,8 +314,8 @@ openvpn
 
 **DELETE openvpn user API**
 
-    Verb	URI	                               Description
-    DELETE	/openvpn/server/:id/users/:user	       Delete openvpn user from client-config-directory
+    Verb    URI                                Description
+    DELETE  /openvpn/server/:id/users/:user        Delete openvpn user from client-config-directory
 
 
 **Example Request and Response**
@@ -321,8 +327,8 @@ openvpn
 
 **DELETE openvpn API**
 
-    Verb	URI	                   Description
-    DELETE	openvpn/server/:server	   Delete openvpn configuration by ID.
+    Verb    URI                    Description
+    DELETE  openvpn/server/:server     Delete openvpn configuration by ID.
 
 
 **Example Request and Response**
@@ -332,3 +338,35 @@ openvpn
     Status Code: 204 No Content
     Connection: keep-alive
 
+
+
+
+Copyright & License
+--------
+LICENSE 
+
+MIT
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright (c) 2014-2015, Clearpath Networks, <licensing@clearpathnet.com>.
+
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
