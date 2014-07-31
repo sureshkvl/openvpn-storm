@@ -1,6 +1,9 @@
 OpenvpnService = require './openvpn-service'
 OpenvpnServerRegistry = require('./openvpn-registry').VpnServerRegistry
 OpenvpnUserRegistry = require('./openvpn-registry').VpnUserRegistry
+
+OpenvpnClientService = require './openvpn-client-service'
+OpenvpnClientRegistry = require('./openvpn-client-registry').VpnClientRegistry
 async = require('async')
 
 @include = ->
@@ -12,11 +15,26 @@ async = require('async')
     plugindir ?= "/var/stormflash/plugins/openvpn"
 
     serverRegistry = new OpenvpnServerRegistry plugindir+"/openvpn-servers.db"
+    clientRegistry = new OpenvpnClientRegistry plugindir+"/openvpn-clients.db"
     userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
 
     serverRegistry.on 'ready', ->
         for service in @list()
             continue unless service instanceof OpenvpnService
+
+            agent.log "restore: trying to recover:", service
+            do (service) -> service.generate (err) ->
+                if err?
+                    return agent.log "restore: openvpn #{service.id} failed to generate configs!"
+                agent.invoke service, (err, instance) ->
+                    if err?
+                        agent.log "restore: openvpn #{service.id} invoke failed with:", err
+                    else
+                        agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
+
+    clientRegistry.on 'ready', ->
+        for service in @list()
+            continue unless service instanceof OpenvpnClientService
 
             agent.log "restore: trying to recover:", service
             do (service) -> service.generate (err) ->
@@ -100,4 +118,31 @@ async = require('async')
     @get '/openvpn/server': ->
         @send serverRegistry.list()
 
+
+    @post '/openvpn/client': ->
+        try
+            service = new OpenvpnClientService null, @body, {}
+        catch err
+            return @next err
+
+        service.generate (err, results) =>
+            return @next err if err?
+            agent.log "POST /openvpn/client generation results:", results
+            clientRegistry.add service
+            agent.invoke service, (err, instance) =>
+                if err?
+                    #serverRegistry.remove service.id
+                    return @next err
+                else
+                    @send {id: service.id, running: true}
+
+    @del '/openvpn/client/:client': ->
+        service = clientRegistry.get @params.client
+        return @send 404 unless service?
+
+        clientRegistry.remove @params.client
+        @send 204
+
+    @get '/openvpn/client': ->
+        @send clientRegistry.list()
 
