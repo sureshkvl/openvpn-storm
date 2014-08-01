@@ -10,6 +10,7 @@ class OpenvpnClientService extends StormService
         additionalProperties: true
         properties:
             id:                  {"type":"string", "required":false}
+            pull:                {"type":"boolean", "required":true}
             'tls-client':        {"type":"boolean", "required":true}
             dev:                 {"type":"string", "required":true}
             proto:               {"type":"string", "required":false}
