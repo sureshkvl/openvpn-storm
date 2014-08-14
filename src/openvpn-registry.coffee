@@ -3,7 +3,7 @@ StormData = require 'stormdata'
 
 OpenvpnService = require './openvpn-service'
 
-class VpnServerRegistry extends StormRegistry
+class OpenvpnRegistry extends StormRegistry
     constructor: (filename) ->
         @on 'load', (key,val) ->
             console.log "restoring #{key} with:",val
@@ -62,7 +62,7 @@ class UserData extends StormData
 
 #------------------------------------------------------------------------
 
-class VpnUserRegistry extends StormRegistry
+class OpenvpnUserRegistry extends StormRegistry
    
     fs = require 'fs'
 
@@ -122,5 +122,5 @@ class VpnUserRegistry extends StormRegistry
                 console.log 'removed file'
                 callback(true)
 
-module.exports.VpnServerRegistry  = VpnServerRegistry
-module.exports.VpnUserRegistry  = VpnUserRegistry 
+module.exports.OpenvpnRegistry  = OpenvpnRegistry
+module.exports.OpenvpnUserRegistry  = OpenvpnUserRegistry
