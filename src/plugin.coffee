@@ -31,7 +31,7 @@ async = require('async')
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
                         agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
-    ###
+    
     clientRegistry.on 'ready', ->
         for service in @list()
             continue unless service instanceof OpenvpnClientService
@@ -45,7 +45,7 @@ async = require('async')
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
                         agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
-    ###
+    
 
     @post '/openvpn/server': ->
         try

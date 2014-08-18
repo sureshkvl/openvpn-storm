@@ -23,9 +23,7 @@ class OpenvpnService extends StormService
 
         opts ?= {}
         opts.configPath ?= "/var/stormflash/plugins/openvpn"
-        opts.logPath ?= "/var/log/openvpn"
-
-        #@schema = definedSchema
+        opts.logPath ?= "/var/log/openvpn"        
 
         super id, data, opts
 
