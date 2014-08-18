@@ -1,7 +1,7 @@
 StormRegistry = require 'stormregistry'
 StormData = require 'stormdata'
 
-OpenvpnService = require './openvpn-service'
+OpenvpnService = require('./openvpn-service').OpenvpnService
 
 class OpenvpnRegistry extends StormRegistry
     constructor: (filename) ->

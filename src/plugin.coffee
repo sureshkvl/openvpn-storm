@@ -1,9 +1,8 @@
 
 OpenvpnRegistry = require('./openvpn-registry').OpenvpnRegistry
 OpenvpnUserRegistry = require('./openvpn-registry').OpenvpnUserRegistry
-
-OpenvpnClientService = require ('./openvpn-service').Client
-OpenvpnServerService = require ('./openvpn-service').Server
+OpenvpnClientService = require('./openvpn-service').OpenvpnClient
+OpenvpnServerService = require('./openvpn-service').OpenvpnServer
 
 async = require('async')
 
@@ -15,7 +14,7 @@ async = require('async')
     plugindir = @settings.plugindir
     plugindir ?= "/var/stormflash/plugins/openvpn"
 
-    clientRegistry = new OpenvpnRegistry plugindir+"/openvpn-clients.db"
+    #clientRegistry = new OpenvpnRegistry plugindir+"/openvpn-clients.db"
     serverRegistry = new OpenvpnRegistry plugindir+"/openvpn-servers.db"
     userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
 
@@ -32,7 +31,7 @@ async = require('async')
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
                         agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
-
+    ###
     clientRegistry.on 'ready', ->
         for service in @list()
             continue unless service instanceof OpenvpnClientService
@@ -46,7 +45,7 @@ async = require('async')
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
                         agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
-
+    ###
 
     @post '/openvpn/server': ->
         try
@@ -64,7 +63,7 @@ async = require('async')
                     return @next err
                 else
                     @send {id: service.id, running: true}
-
+    
     @del '/openvpn/server/:server': ->
         service = serverRegistry.get @params.server
         return @send 404 unless service?
@@ -147,4 +146,4 @@ async = require('async')
     @get '/openvpn/client': ->
         @send clientRegistry.list()
 
-
+    
