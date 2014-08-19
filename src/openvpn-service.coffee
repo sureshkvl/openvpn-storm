@@ -1,7 +1,6 @@
 StormService = require('stormservice')
 merge = require('fmerge')
 fs = require('fs')
-extend = require('util')._extend
 
 class OpenvpnService extends StormService    
 
@@ -14,8 +13,7 @@ class OpenvpnService extends StormService
             detached: true
             stdio: ["ignore", -1, -1]
 
-    constructor: (id, data, opts, schemaObj) ->
-        schema = extend {},schemaObj
+    constructor: (id, data, opts) ->
 
         if data.instance?
             @instance = data.instance
@@ -60,7 +58,7 @@ class OpenvpnServerService extends OpenvpnService
 
     constructor: (id, data, opts) ->
 
-        serverSchema =
+        schema =
             name: "openvpn"
             type: "object"
             additionalProperties: true
@@ -114,13 +112,13 @@ class OpenvpnServerService extends OpenvpnService
             catch err                                              
                 #@settings.agent.log 'Error : ', err  
 
-        super id, data, opts, serverSchema
+        super id, data, opts
 
 
 class OpenvpnClientService extends OpenvpnService
     constructor: (id, data, opts) ->
 
-        clientSchema =
+        schema =
             name: "openvpn"
             type: "object"
             additionalProperties: true
@@ -153,7 +151,7 @@ class OpenvpnClientService extends OpenvpnService
                 verb:                {"type":"number", "required":false}
                 mlock:               {"type":"boolean", "required":false}
 
-        super id, data, opts, clientSchema
+        super id, data, opts
 
 
 module.exports.OpenvpnService = OpenvpnService
