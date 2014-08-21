@@ -143,6 +143,13 @@ async = require('async')
         clientRegistry.remove @params.client
         @send 204
 
+    @get '/openvpn/client/:id': ->
+        service = clientRegistry.get @params.id
+        unless service?
+            @send 404
+        else
+            @send service
+
     @get '/openvpn/client': ->
         @send clientRegistry.list()
 
