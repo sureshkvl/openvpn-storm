@@ -2,12 +2,20 @@ StormRegistry = require 'stormregistry'
 StormData = require 'stormdata'
 
 OpenvpnService = require('./openvpn-service').OpenvpnService
+OpenvpnClientService = require('./openvpn-service').OpenvpnClient
+OpenvpnServerService = require('./openvpn-service').OpenvpnServer
 
 class OpenvpnRegistry extends StormRegistry
     constructor: (filename) ->
         @on 'load', (key,val) ->
             console.log "restoring #{key} with:",val
-            entry = new OpenvpnService key,val
+
+            dbname = filename.split '/'
+            if dbname is "openvpn-clients.db"
+                entry = new OpenvpnClientService key,val
+            else
+                entry = new OpenvpnServerService key,val
+
             if entry?
                 entry.saved = true
                 @add entry
