@@ -10,7 +10,7 @@ class OpenvpnRegistry extends StormRegistry
         @on 'load', (key,val) ->
             console.log "restoring #{key} with:",val
 
-            dbname = filename.split '/'
+            [..., dbname] = filename.split '/'
             if dbname is "openvpn-clients.db"
                 entry = new OpenvpnClientService key,val
             else
