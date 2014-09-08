@@ -6,12 +6,11 @@ OpenvpnClientService = require('./openvpn-service').OpenvpnClient
 OpenvpnServerService = require('./openvpn-service').OpenvpnServer
 
 class OpenvpnRegistry extends StormRegistry
-    constructor: (filename) ->
+    constructor: (@svc, filename) ->
         @on 'load', (key,val) ->
             console.log "restoring #{key} with:",val
 
-            [..., dbname] = filename.split '/'
-            if dbname is "openvpn-clients.db"
+            if @svc is "client"            
                 entry = new OpenvpnClientService key,val
             else
                 entry = new OpenvpnServerService key,val
@@ -27,7 +26,11 @@ class OpenvpnRegistry extends StormRegistry
         super filename
 
     add: (service) ->
-        return unless service instanceof OpenvpnService
+        if @svc is "client"
+            return unless service instanceof OpenvpnClientService 
+        else
+            return unless service instanceof OpenvpnServerService 
+            
         entry = super service.id, service
         # register for 'running' events of this service and update DB
         entry.on "running", (instance) =>
@@ -44,7 +47,7 @@ class OpenvpnRegistry extends StormRegistry
         entry = super key
         return unless entry?
 
-        if entry.data? and entry.data instanceof OpenvpnService
+        if entry.data? and entry.data instanceof OpenvpnService 
             entry.data.id = entry.id
             entry.data
         else
