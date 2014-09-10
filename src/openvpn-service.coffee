@@ -13,7 +13,7 @@ class OpenvpnService extends StormService
             detached: true
             stdio: ["ignore", -1, -1]
 
-    constructor: (id, data, opts, schema) ->
+    constructor: (id, data, opts) ->
 
         if data.instance?
             @instance = data.instance
@@ -21,10 +21,7 @@ class OpenvpnService extends StormService
 
         opts ?= {}
         opts.configPath ?= "/var/stormflash/plugins/openvpn"
-        opts.logPath ?= "/var/log/openvpn"        
-
-        if schema?
-            @schema = schema
+        opts.logPath ?= "/var/log/openvpn"                
 
         super id, data, opts
 
@@ -61,7 +58,7 @@ class OpenvpnServerService extends OpenvpnService
 
     constructor: (id, data, opts) ->
 
-        schema =
+        @schema =
             name: "openvpn"
             type: "object"
             additionalProperties: true
@@ -115,13 +112,13 @@ class OpenvpnServerService extends OpenvpnService
             catch err                                              
                 #@settings.agent.log 'Error : ', err  
 
-        super id, data, opts, schema
+        super id, data, opts
 
 
 class OpenvpnClientService extends OpenvpnService
     constructor: (id, data, opts) ->
 
-        schema =
+        @schema =
             name: "openvpn"
             type: "object"
             additionalProperties: true
@@ -154,7 +151,7 @@ class OpenvpnClientService extends OpenvpnService
                 verb:                {"type":"number", "required":false}
                 mlock:               {"type":"boolean", "required":false}
 
-        super id, data, opts, schema
+        super id, data, opts
 
 
 module.exports.OpenvpnService = OpenvpnService

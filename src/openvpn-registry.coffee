@@ -9,7 +9,7 @@ class OpenvpnRegistry extends StormRegistry
     constructor: (@svc, filename) ->
         @on 'load', (key,val) ->
             console.log "restoring #{key} with:",val
-
+            #entry = new OpenvpnService key,val
             if @svc is "client"            
                 entry = new OpenvpnClientService key,val
             else
@@ -30,7 +30,7 @@ class OpenvpnRegistry extends StormRegistry
             return unless service instanceof OpenvpnClientService 
         else
             return unless service instanceof OpenvpnServerService 
-            
+        #return unless service instanceof OpenvpnService 
         entry = super service.id, service
         # register for 'running' events of this service and update DB
         entry.on "running", (instance) =>
@@ -47,7 +47,7 @@ class OpenvpnRegistry extends StormRegistry
         entry = super key
         return unless entry?
 
-        if entry.data? and entry.data instanceof OpenvpnService 
+        if entry.data? and entry.data 
             entry.data.id = entry.id
             entry.data
         else
