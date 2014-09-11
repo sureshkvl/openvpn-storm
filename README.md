@@ -1,5 +1,11 @@
-openvpn
+openvpn-storm
 ===================
+
+Synopsis
+--------
+openvpn-storm is a storm plugin for managing the openvpn service.
+
+It provides the REST API to configure the openvpn server and start the server using stormflash framework. Also the openvpn process is monitored by the stormflash.
 
 
 *List of APIs*
@@ -10,45 +16,32 @@ openvpn
     <th>Verb</th><th>URI</th><th>Description</th>
   </tr>
   <tr>
-    <td>POST</td><td>/openvpn/server</td><td>Update the openvpn server.conf file</td>
+    <td>POST</td><td>/openvpn/server</td><td>Create openvpn server configuration</td>
+  </tr>
+  
+  <tr>
+    <td>POST</td><td>/openvpn/server/:server/users</td><td>Add user to openvpn server configuration</td>
   </tr>
   <tr>
-    <td>POST</td><td>/openvpn/client</td><td>Update the openvpn client.conf file</td>
-  </tr>
-  <tr>
-    <td>POST</td><td>/openvpn/server/:server/users</td><td>Add user to server configuration</td>
-  </tr>
-  <tr>
-    <td>GET</td><td>/openvpn/server</td><td>Describe server openvpn info</td>
+    <td>GET</td><td>/openvpn/server</td><td>Describe openvpn server info</td>
   </tr>
   <tr>
     <td>GET</td><td>/openvpn/server/:id</td><td>Describe server server-id openvpn info</td>
   </tr>
-  <tr>
-    <td>GET</td><td>/openvpn/client</td><td>Describe client openvpn info</td>
-  </tr>
+  
   <tr>
     <td>DELETE</td><td>/openvpn/server/:id/users/:user</td><td>Delete user from server with server-id</td>
   </tr>
   <tr>
     <td>DELETE</td><td>/openvpn/server/:server</td><td>Delete server-id info  from server</td>
-  </tr>
-
-  <tr>
-    <td>DELETE</td><td>/openvpn/client/:client</td><td>Delete client-id info from client</td>
-  </tr>
-
+  </tr> 
 </table>
 
 
-*OpenVPN API*
-=============
-
-Post openvpn server configuration
-----------------------------------
+**POST openvpn API**
 
     Verb      URI                Description
-    POST    /openvpn/server	    Update the openvpn server.conf file.
+    POST      /openvpn/server    Create openvpn server configuration and starts the openvpn server
 
 
 **Example Request and Response**
@@ -57,418 +50,285 @@ Post openvpn server configuration
     
     {
         "port": 7000,
-        "dev": "tun",
+        "dev": "tun1",
         "proto": "udp",
-        "ca": "/etc/ca-bundle.pem",
+        "ca": "/var/stormflash/meta/ca-bundle.pem",
         "dh": "/etc/dh1024.pem",
-        "cert": "/etc/identity/snap.cert",
-        "key": "/etc/identity/snap.key",
+        "cert": "/var/stormflash/meta/openvpn.cert",
+        "key": "/var/stormflash/meta/openvpn.key",
         "server": "172.17.0.0 255.255.255.0",
-        "ifconfig-pool-persist": "/etc/openvpn/ip.map",
-        "script-security": "3 system",
         "multihome": true,
         "management": "127.0.0.1 2020",
         "cipher": "AES-256-CBC",
-        "tls-cipher": "AES256-SHA",
         "auth": "SHA1",
         "topology": "subnet",
-        "route-gateway": "172.17.0.1",
-        "client-config-dir": "/config/openvpn/ccd",
-        "ccd-exclusive": true,
-        "client-to-client": true,
-        "route": [
-            "192.168.0.0 255.255.255.0",
-            "192.168.1.0 255.255.255.0"
-        ],
+        "route": null,
         "push": [
-            "route 192.168.3.0 255.255.255.0",
             "comp-lzo no"
         ],
-        "tls-timeout": 10,
-        "max-clients": 254,
-        "persist-key": true,
-        "persist-tun": true,
         "status": "/var/log/server-status.log",
-        "keepalive": "5 45",
-        "comp-lzo": "no",
+        "keepalive": "5 60",
         "sndbuf": 262144,
         "rcvbuf": 262144,
         "txqueuelen": 500,
-        "replay-window": "512 15",
-        "duplicate-cn": true,
-        "log-append": "/var/log/vpn-general.log",
         "verb": 3,
-        "mlock": true
+        "mlock": true,
+        "script-security": "3 system",
+        "tls-cipher": "DHE-RSA-AES256-SHA",
+        "route-gateway": "172.17.0.1",
+        "client-config-dir": "/var/stormflash/meta/ccd",
+        "ccd-exclusive": true,
+        "max-clients": 254,
+        "persist-key": true,
+        "persist-tun": true,
+        "comp-lzo": "no",
+        "replay-window": "512 15",
+        "client-to-client": true
     }
     
 ### Response JSON   
 
-    
-
     {
-       "id": "e06f3da5-3d1e-4eae-8647-b18cd59b418d",
-       "config":
-       {
-           "port": 7000,
-           "dev": "tun",
-           "proto": "udp",
-           "ca": "/etc/ca-bundle.pem",
-           "dh": "/etc/dh1024.pem",
-           "cert": "/etc/identity/snap.cert",
-           "key": "/etc/identity/snap.key",
-           "server": "172.17.0.0 255.255.255.0",
-           "ifconfig-pool-persist": "/etc/openvpn/ip.map",
-           "script-security": "3 system",
-           "multihome": true,
-           "management": "127.0.0.1 2020",
-           "cipher": "AES-256-CBC",
-           "tls-cipher": "AES256-SHA",
-           "auth": "SHA1",
-           "topology": "subnet",
-           "route-gateway": "172.17.0.1",
-           "client-config-dir": "/config/openvpn/ccd",
-           "ccd-exclusive": true,
-           "client-to-client": true,
-           "route":
-           [
-               "192.168.0.0 255.255.255.0",
-               "192.168.1.0 255.255.255.0"
-           ],
-           "push":
-           [
-               "route 192.168.3.0 255.255.255.0",
-               "comp-lzo no"
-           ],
-           "tls-timeout": 10,
-           "max-clients": 254,
-           "persist-key": true,
-           "persist-tun": true,
-           "status": "/var/log/server-status.log",
-           "keepalive": "5 45",
-           "comp-lzo": "no",
-           "sndbuf": 262144,
-           "rcvbuf": 262144,
-           "txqueuelen": 500,
-           "replay-window": "512 15",
-           "duplicate-cn": true,
-           "log-append": "/var/log/vpn-general.log",
-           "verb": 3,
-           "mlock": true
-       }
-    }
+        "id": "b90736af-b58f-4929-8e9a-de4bf0fd7aa5",
+        "running": true
+    } 
 
 
 
-Post openvpn client configuration
-----------------------------------
+**POST openvpn user API**
 
-    Verb	URI	        	 	   Description
-    POST	/openvpn/client	       Update the openvpn server.conf file.
+    Verb    URI                      Description
+    POST    /openvpn/server/:server/users    Add openvpn user.
 
 
 **Example Request and Response**
 
 ### Request JSON
-    
+    [
     {
-        "pull": true,
-        "tls-client": true,
-        "dev": "tun",
-        "remote": "raviserver 7000",
-        "proto": "udp",
-        "ca": "/home/calsoft-admin/openvpn/keys/ca.crt",
-        "dh": "/home/calsoft-admin/openvpn/keys/dh1024.pem",
-        "cert": "/home/calsoft-admin/openvpn/keys/client1.crt",
-        "key": "/home/calsoft-admin/openvpn/keys/client1.key",
-        "cipher": "AES-256-CBC",
-        "tls-cipher": "AES256-SHA",
-        "push":
-        [
-            "route 192.168.122.0 255.255.255.0"
+        "id": "439ecacc-979f-47f9-9ea0-1cc3bc7005ed",
+        "email": "grani@clearpathnet.com",
+        "cname": "5C_F8_A1_14_34_5D@device.intercloud.net",
+        "push": [
+            "dhcp-option DNS 8.8.8.8",
+            "ip-win32 dynamic",
+            "route-delay 5",
+            "redirect-gateway def1"
+        ]
+    }
+    ]
+ 
+### Response JSON   
+
+    {
+    "439ecacc-979f-47f9-9ea0-1cc3bc7005ed": {
+        "id": "439ecacc-979f-47f9-9ea0-1cc3bc7005ed",
+        "email": "grani@clearpathnet.com",
+        "cname": "5C_F8_A1_14_34_5D@device.intercloud.net",
+        "push": [
+            "dhcp-option DNS 8.8.8.8",
+            "ip-win32 dynamic",
+            "route-delay 5",
+            "redirect-gateway def1"
         ],
-        "persist-key": true,
-        "persist-tun": true,
-        "status": "/var/log/server-status.log",
-        "comp-lzo": "no",
-        "verb": 3,
-        "mlock": true
+        "ccdpath": "/var/stormflash/meta/ccd",
+        "saved": true
     }
-    
-
-   
-### Response JSON
-
-    {
-       "id": "9c70d5d1-83a5-472b-84eb-708e8a7564f8",
-       "config":
-       {
-           "pull": true,
-           "tls-client": true,
-           "dev": "tun",
-           "remote": "raviserver 7000",
-           "proto": "udp",
-           "ca": "/home/calsoft-admin/openvpn/keys/ca.crt",
-           "dh": "/home/calsoft-admin/openvpn/keys/dh1024.pem",
-           "cert": "/home/calsoft-admin/openvpn/keys/client1.crt",
-           "key": "/home/calsoft-admin/openvpn/keys/client1.key",
-           "cipher": "AES-256-CBC",
-           "tls-cipher": "AES256-SHA",
-           "push":
-           [
-               "route 192.168.122.0 255.255.255.0"
-           ],
-           "persist-key": true,
-           "persist-tun": true,
-           "status": "/var/log/server-status.log",
-           "comp-lzo": "no",
-           "verb": 3,
-           "mlock": true
-       }
     }
 
+**GET openvpn server API**
 
-
-Add a User to VPN
------------------
-
-    Verb	URI	        	               Description
-    POST	/openvpn/server/:server/users	 Add user into client-config-directory
-
-
-**Example Request and Response**
-
-### Request JSON
-
-    {
-    	"id": "d6bd1f89-dfee-44a6-8863-8a0802ee7acd",
-    	"email": "master@oftheuniverse.com",
-    	"push": 
-         [
-    	   "dhcp-option DNS x.x.x.x",
-    	   "ip-win32 dynamic",
-    	   "route-delay 5"
-    	]
-    }
-### Response JSON	
-
-    {
-       "result": true
-    }
-
-
-
-Delete a User from VPN
-----------------------
-
-    Verb	URI	                               Description
-    DELETE	/openvpn/server/:id/users/:user	   Delete user from client-config-directory
-
-
-**Example Request and Response**
-
-### Response JSON
-
-    Status Code: 204 No Content
-    Connection: keep-alive
-    Date: Mon, 27 Jan 2014 05:36:48 GMT
-    X-Powered-By: Express
-
-
-
-Describe openvpn
-----------------
-
-    Verb	URI	                 Description
-    GET	/openvpn/server/:id	   Show OpenVPN server info 
+    Verb    URI                  Description
+    GET         /openvpn/server          Show openvpn server configuration. 
 
 **Example Request and Response**
 
 
 ### Response JSON
-
-    
-
+    [
     {
-       "id": "d6bd1f89-dfee-44a6-8863-8a0802ee7acd",
-       "users":
-       [
-           null,          
-           {
-               "id": "4ac5b5bb-884c-43ae-a9ca-271de189acb1",
-               "email": "master@oftheuniverse.com",
-               "push":
-               [
-                   "dhcp-option DNS x.x.x.x",
-                   "ip-win32 dynamic",
-                   "route-delay 5"
-               ]
-           },
-           {
-               "id": "4ac5b5bb-884c-43ae-a9ca-271de189acb1",
-               "email": "master@oftheuniverse.com",
-               "push":
-               [
-                   "dhcp-option DNS x.x.x.x",
-                   "ip-win32 dynamic",
-                   "route-delay 5"
-               ]
-           },
-           {
-               "id": "d6bd1f89-dfee-44a6-8863-8a0802ee7acd",
-               "email": "master@oftheuniverse.com",
-               "push":
-               [
-                   "dhcp-option DNS x.x.x.x",
-                   "ip-win32 dynamic",
-                   "route-delay 5"
-               ]
-           }
-       ],
-       "connections":
-       [
-           {
-               "cname": "snap_3375.1024",
-               "remote": "67.100.39.69:38371",
-               "received": "1435527",
-               "sent": "1129202",
-               "since": "Mon Jun 25 05:23:26 2012",
-               "ip": "10.1.20.0/24"
-           }
-       ]
-    }
-
-
-
-Describe openvpn server
------------------------
-
-    Verb	URI	                 Description
-    GET	/openvpn/server	   Show openvpn server configuration. 
-
-**Example Request and Response**
-
-
-### Response JSON
-
-    {
-        "servers": 
-        [
-            {
-                "id": "9e830e8d-6312-409d-b781-d2e005027f59",
-                "config": 
-                {
-                    "port": 700,
-                    "dev": "tun",
-                    "proto": "udp",
-                    "ca": "/etc/ca-bundle.pem",
-                    "dh": "/etc/dh1024.pem",
-                    "cert": "/etc/identity/snap.cert",
-                    "key": "/etc/identity/snap.key",
-                    "server": "172.17.0.0 255.255.255.0",
-                    "script-security": "3 system",
-                    "multihome": true,
-                    "management": "127.0.0.1 2020",
-                    "cipher": "AES-256-CBC",
-                    "tls-cipher": "AES256-SHA",
-                    "auth": "SHA1",
-                    "topology": "subnet",
-                    "route-gateway": "172.17.0.1",
-                    "client-config-dir": "/config/openvpn/ccd",
-                    "ccd-exclusive": true,
-                    "client-to-client": true,
-                    "route":
-                    [
-                        "192.168.0.0 255.255.255.0",
-                        "192.168.1.0 255.255.255.0"
-                    ],
-                    "push": 
-                    [
-                        "route 192.168.3.0 255.255.255.0",
-                        "comp-lzo no"
-                    ],
-                    "max-clients": 254,
-                    "persist-key": true,
-                    "persist-tun": true,
-                    "status": "/var/log/server-status.log",
-                    "keepalive": "5 45",
-                    "comp-lzo": "no",
-                    "sndbuf": 262144,
-                    "rcvbuf": 262144,
-                    "txqueuelen": 500,
-                    "replay-window": "512 15",
-                    "verb": 3,
-                    "mlock": true
-                }
+        "id": "b90736af-b58f-4929-8e9a-de4bf0fd7aa5",
+        "data": {
+            "port": 7000,
+            "dev": "tun1",
+            "proto": "udp",
+            "ca": "/var/stormflash/meta/ca-bundle.pem",
+            "dh": "/etc/dh1024.pem",
+            "cert": "/var/stormflash/meta/openvpn.cert",
+            "key": "/var/stormflash/meta/openvpn.key",
+            "server": "172.17.0.0 255.255.255.0",
+            "multihome": true,
+            "management": "127.0.0.1 2020",
+            "cipher": "AES-256-CBC",
+            "auth": "SHA1",
+            "topology": "subnet",
+            "route": null,
+            "push": [
+                "comp-lzo no"
+            ],
+            "status": "/var/log/server-status.log",
+            "keepalive": "5 60",
+            "sndbuf": 262144,
+            "rcvbuf": 262144,
+            "txqueuelen": 500,
+            "verb": 3,
+            "mlock": true,
+            "script-security": "3 system",
+            "tls-cipher": "DHE-RSA-AES256-SHA",
+            "route-gateway": "172.17.0.1",
+            "client-config-dir": "/var/stormflash/meta/ccd",
+            "ccd-exclusive": true,
+            "max-clients": 254,
+            "persist-key": true,
+            "persist-tun": true,
+            "comp-lzo": "no",
+            "replay-window": "512 15",
+            "client-to-client": true
+        },
+        "saved": true,
+        "isRunning": true,
+        "_events": {
+            "running": [
+                null,
+                null
+            ]
+        },
+        "configPath": "/var/stormflash/plugins/openvpn",
+        "logPath": "/var/log/openvpn",
+        "out": 22,
+        "err": 24,
+        "configs": {
+            "service": {
+                "filename": "/var/stormflash/plugins/openvpn/b90736af-b58f-4929-8e9a-de4bf0fd7aa5.conf"
             }
-       ]
+        },
+        "invocation": {
+            "name": "openvpn",
+            "path": "/usr/sbin",
+            "monitor": true,
+            "args": [
+                "--config",
+                "/var/stormflash/plugins/openvpn/b90736af-b58f-4929-8e9a-de4bf0fd7aa5.conf"
+            ],
+            "options": {
+                "detached": true,
+                "stdio": [
+                    "ignore",
+                    22,
+                    24
+                ]
+            }
+        },
+        "isReady": true,
+        "instance": 12862
     }
+    ]
 
-Describe openvpn client
------------------------
 
-    Verb	URI	                 Description
-    GET	/openvpn/client	   Show openvpn client configuration. 
+**GET openvpn server API**
+
+    Verb    URI                  Description
+    GET         /openvpn/server/:id  Show openvpn server configuration by ID. 
 
 **Example Request and Response**
 
 
-### Response JSON    
+### Response JSON
 
     {
-       "clients":
-       [
-           {
-               "id": "989b12e6-564d-488d-9796-4ded01bcfbad",
-               "config":
-               {
-                   "pull": true,
-                   "tls-client": true,
-                   "dev": "tun",
-                   "remote": "raviserver 7000",
-                   "proto": "udp",
-                   "ca": "/home/calsoft-admin/openvpn/keys/ca.crt",
-                   "dh": "/home/calsoft-admin/openvpn/keys/dh1024.pem",
-                   "cert": "/home/calsoft-admin/openvpn/keys/client1.crt",
-                   "key": "/home/calsoft-admin/openvpn/keys/client1.key",
-                   "cipher": "AES-256-CBC",
-                   "tls-cipher": "AES256-SHA",
-                   "push":
-                   [
-                       "route 192.168.122.0 255.255.255.0"
-                   ],
-                   "persist-key": true,
-                   "persist-tun": true,
-                   "status": "/var/log/server-status.log",
-                   "comp-lzo": "no",
-                   "verb": 3,
-                   "mlock": true
-               }
-           }
-       ]
+        "id": "b90736af-b58f-4929-8e9a-de4bf0fd7aa5",
+        "data": {
+            "port": 7000,
+            "dev": "tun1",
+            "proto": "udp",
+            "ca": "/var/stormflash/meta/ca-bundle.pem",
+            "dh": "/etc/dh1024.pem",
+            "cert": "/var/stormflash/meta/openvpn.cert",
+            "key": "/var/stormflash/meta/openvpn.key",
+            "server": "172.17.0.0 255.255.255.0",
+            "multihome": true,
+            "management": "127.0.0.1 2020",
+            "cipher": "AES-256-CBC",
+            "auth": "SHA1",
+            "topology": "subnet",
+            "route": null,
+            "push": [
+                "comp-lzo no"
+            ],
+            "status": "/var/log/server-status.log",
+            "keepalive": "5 60",
+            "sndbuf": 262144,
+            "rcvbuf": 262144,
+            "txqueuelen": 500,
+            "verb": 3,
+            "mlock": true,
+            "script-security": "3 system",
+            "tls-cipher": "DHE-RSA-AES256-SHA",
+            "route-gateway": "172.17.0.1",
+            "client-config-dir": "/var/stormflash/meta/ccd",
+            "ccd-exclusive": true,
+            "max-clients": 254,
+            "persist-key": true,
+            "persist-tun": true,
+            "comp-lzo": "no",
+            "replay-window": "512 15",
+            "client-to-client": true
+        },
+        "saved": true,
+        "isRunning": true,
+        "_events": {
+            "running": [
+                null,
+                null
+            ]
+        },
+        "configPath": "/var/stormflash/plugins/openvpn",
+        "logPath": "/var/log/openvpn",
+        "out": 22,
+        "err": 24,
+        "configs": {
+            "service": {
+                "filename": "/var/stormflash/plugins/openvpn/b90736af-b58f-4929-8e9a-de4bf0fd7aa5.conf"
+            }
+        },
+        "invocation": {
+            "name": "openvpn",
+            "path": "/usr/sbin",
+            "monitor": true,
+            "args": [
+                "--config",
+                "/var/stormflash/plugins/openvpn/b90736af-b58f-4929-8e9a-de4bf0fd7aa5.conf"
+            ],
+            "options": {
+                "detached": true,
+                "stdio": [
+                    "ignore",
+                    22,
+                    24
+                ]
+            }
+        },
+        "isReady": true,
+        "instance": 12862
     }
 
-Delete client configuration
----------------------------
+**DELETE openvpn user API**
 
-    Verb	URI	                               Description
-    DELETE	openvpn/client/:client	   Delete user from client-config-directory
+    Verb    URI                                Description
+    DELETE  /openvpn/server/:id/users/:user        Delete openvpn user from client-config-directory
 
 
 **Example Request and Response**
 
-
-### Response JSON    
+### Response JSON
 
     Status Code: 204 No Content
-    Connection: keep-alive
 
 
+**DELETE openvpn API**
 
-Delete server configuration
----------------------------
-
-    Verb	URI	                               Description
-    DELETE	openvpn/server/:server	   Delete user from client-config-directory
+    Verb    URI                    Description
+    DELETE  openvpn/server/:server     Delete openvpn configuration by ID.
 
 
 **Example Request and Response**
@@ -479,3 +339,34 @@ Delete server configuration
     Connection: keep-alive
 
 
+
+
+Copyright & License
+--------
+LICENSE 
+
+MIT
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright (c) 2014-2015, Clearpath Networks, <licensing@clearpathnet.com>.
+
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
