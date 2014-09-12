@@ -86,7 +86,7 @@ async = require('async')
         for user in users
             do (user) ->
                 tasks[user.id] = (callback) ->
-                    user.ccdpath = server.data["client-config-dir"]
+                    user.ccdpath = server["client-config-dir"]
                     entry = userRegistry.add user.id, user
                     userRegistry.adduser entry
                     callback null, entry

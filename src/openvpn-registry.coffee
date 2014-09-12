@@ -117,7 +117,7 @@ class OpenvpnUserRegistry extends StormRegistry
 
     deleteuser: (server, user, callback) ->
         path = require 'path'        
-        ccdpath = server.data["client-config-dir"]
+        ccdpath = server["client-config-dir"]
         cname = user["cname"]
         email = user["email"]
         file =  if cname then cname else email
