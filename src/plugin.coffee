@@ -14,6 +14,9 @@ async = require('async')
     plugindir = @settings.plugindir
     plugindir ?= "/var/stormflash/plugins/openvpn"
 
+    fs = require 'fs'
+    fs.mkdirSync(plugindir) unless fs.existsSync(plugindir)
+
     clientRegistry = new OpenvpnRegistry "client", plugindir+"/openvpn-clients.db"
     serverRegistry = new OpenvpnRegistry "server", plugindir+"/openvpn-servers.db"
     userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
