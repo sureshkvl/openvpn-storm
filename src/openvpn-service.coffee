@@ -2,7 +2,7 @@ StormService = require('stormservice')
 merge = require('fmerge')
 fs = require('fs')
 
-class OpenvpnService extends StormService    
+class OpenvpnService extends StormService
 
     invocation:
         name: 'openvpn'
@@ -21,7 +21,7 @@ class OpenvpnService extends StormService
 
         opts ?= {}
         opts.configPath ?= "/var/stormflash/plugins/openvpn"
-        opts.logPath ?= "/var/log/openvpn"                
+        opts.logPath ?= "/var/log/openvpn"
 
         super id, data, opts
 
@@ -54,7 +54,7 @@ class OpenvpnService extends StormService
         @emit 'destroy'
 
 
-class OpenvpnServerService extends OpenvpnService    
+class OpenvpnServerService extends OpenvpnService
 
     constructor: (id, data, opts) ->
 
@@ -103,14 +103,16 @@ class OpenvpnServerService extends OpenvpnService
                 'log-append':        {"type":"string", "required":false}
                 verb:                {"type":"number", "required":false}
                 mlock:               {"type":"boolean", "required":false}
+                'tun-mtu':           {"type":"number", "required":false}
+                mssfix:              {"type":"string", "required":false}
 
-        #create ccd directory                                       
-        ccdpath = data["client-config-dir"] 
+        #create ccd directory
+        ccdpath = data["client-config-dir"]
         if ccdpath?
             try
-                fs.mkdir "#{ccdpath}", () ->                                       
-            catch err                                              
-                #@settings.agent.log 'Error : ', err  
+                fs.mkdir "#{ccdpath}", () ->
+            catch err
+                #@settings.agent.log 'Error : ', err
 
         super id, data, opts
 
