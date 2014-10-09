@@ -21,6 +21,8 @@ async = require('async')
     serverRegistry = new OpenvpnRegistry "server", plugindir+"/openvpn-servers.db"
     userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
 
+    Objects = {}
+
     serverRegistry.on 'ready', ->
         for service in @list()
             continue unless service instanceof OpenvpnServerService
@@ -29,7 +31,7 @@ async = require('async')
             do (service) -> service.generate (err) ->
                 if err?
                     return agent.log "restore: openvpn #{service.id} failed to generate configs!"
-                agent.invoke service, (err, instance) ->
+                service.invoke (err, instance) ->
                     if err?
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
@@ -43,7 +45,7 @@ async = require('async')
             do (service) -> service.generate (err) ->
                 if err?
                     return agent.log "restore: openvpn #{service.id} failed to generate configs!"
-                agent.invoke service, (err, instance) ->
+                service.invoke  (err, instance) ->
                     if err?
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
@@ -60,14 +62,33 @@ async = require('async')
             return @next err if err?
             agent.log "POST /openvpn/server generation results:", results
             serverRegistry.add service
-            agent.invoke service, (err, instance) =>
+            Objects[service.id] = service
+            service.invoke (err, instance) =>
                 if err?
                     #serverRegistry.remove service.id
                     return @next err
                 else
                     @send {id: service.id, running: true}
     
-    @del '/openvpn/server/:server': ->
+    @put '/openvpn/server/:server/stop': ->
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+        obj = Objects[service.id]
+        obj.stop (res)=>
+            return @send {id:service.id , stopped: res} 
+
+    @put '/openvpn/server/:server/start': ->
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+        obj = Objects[service.id]
+        obj.invoke (err, instance)=>
+            if err?
+                return @next err
+            else
+                return @send {id:service.id , running: true} 
+
+
+    @del '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
         return @send 404 unless service?
 
@@ -132,7 +153,7 @@ async = require('async')
             return @next err if err?
             agent.log "POST /openvpn/client generation results:", results
             clientRegistry.add service
-            agent.invoke service, (err, instance) =>
+            service.invoke  (err, instance) =>
                 if err?
                     #serverRegistry.remove service.id
                     return @next err
