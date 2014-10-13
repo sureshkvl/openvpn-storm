@@ -30,7 +30,7 @@ class OpenvpnService extends StormService
 
         @invocation = merge @invocation,
             args: ["--config", "#{@configs.service.filename}"]
-            options: { stdio: ["ignore", @out, @err] }
+            options: { stdio: ["ignore", @out, @err] }            
 
         @configs.service.generator = (callback) =>
             vpnconfig = ''

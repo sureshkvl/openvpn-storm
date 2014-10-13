@@ -69,24 +69,6 @@ async = require('async')
                     return @next err
                 else                    
                     @send {id: service.id, running: true}
-    
-    @put '/openvpn/server/:server/stop': ->
-        service = serverRegistry.get @params.server
-        return @send 404 unless service?
-        obj = Objects[service.id]
-        obj.stop (res) =>
-            return @send {id:service.id , stopped: res} 
-
-    @put '/openvpn/server/:server/start': ->
-        service = serverRegistry.get @params.server
-        return @send 404 unless service?
-        obj = Objects[service.id]
-        obj.start (err, instance)=>
-            if err?
-                return @next err
-            else
-                return @send {id:service.id , running: true} 
-
 
     @del '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
@@ -176,5 +158,31 @@ async = require('async')
 
     @get '/openvpn/client': ->
         @send clientRegistry.list()
+###########################################################################
+#The following are debug APIs - included for dev testing... will be removed
+############################################################# ##############
+    @put '/openvpn/server/:server/stop': ->
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+        obj = Objects[service.id]
+        obj.stop (res) =>
+            return @send {id:service.id , stopped: res} 
 
-    
+    @put '/openvpn/server/:server/reload': ->
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+        obj = Objects[service.id]
+        obj.reload (res) =>
+            return @send {id:service.id , reloaded: res} 
+
+    @put '/openvpn/server/:server/start': ->
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+        obj = Objects[service.id]
+        obj.start (err, instance)=>
+            if err?
+                return @next err
+            else
+                return @send {id:service.id , running: true} 
+
+################################################################
