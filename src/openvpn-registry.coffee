@@ -32,11 +32,7 @@ class OpenvpnRegistry extends StormRegistry
             return unless service instanceof OpenvpnServerService 
         #return unless service instanceof OpenvpnService 
         entry = super service.id, service
-        # register for 'running' events of this service and update DB
-        entry.on "running", (instance) =>
-            if entry.instance isnt instance
-                entry.instance = instance
-                @update entry
+                
 
     update: (service) ->
         service.data.instance = service.instance

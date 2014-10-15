@@ -1,4 +1,3 @@
-
 OpenvpnRegistry = require('./openvpn-registry').OpenvpnRegistry
 OpenvpnUserRegistry = require('./openvpn-registry').OpenvpnUserRegistry
 OpenvpnClientService = require('./openvpn-service').OpenvpnClient
@@ -61,22 +60,43 @@ async = require('async')
         service.generate (err, results) =>
             return @next err if err?
             agent.log "POST /openvpn/server generation results:", results
+            #add it to the registry
             serverRegistry.add service
             Objects[service.id] = service
             service.start (err, instance) =>
                 if err?
                     #serverRegistry.remove service.id
                     return @next err
-                else                    
+                else
+                    #add it to stormflash services list
+                    agent.addServices service
                     @send {id: service.id, running: true}
 
     @del '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
         return @send 404 unless service?
+        return @send 404 if Objects[service.id] is null
+        service = Objects[service.id] 
+        service.stop (res) =>        
+            #remove from the registry    
+            serverRegistry.remove @params.server
+            #remove from the stormflash services list
+            agent.removeServices service
+            #destroy the object
+            service.destructor()
+            service = null        
+            @send 204
 
-        serverRegistry.remove @params.server
-        @send 204
-
+    @put '/openvpn/server/:server': ->  
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+        return @send 404 if Objects[service.id] is null
+        service = Objects[service.id]
+        service.update @body, (err, results) => 
+            return @next err if err?            
+            #reload the service with the updated config
+            service.reload (res) =>
+                return @send {id:service.id , reloaded: res} 
 
     @post '/openvpn/server/:server/users': ->
         serverId = @params.server
@@ -134,20 +154,32 @@ async = require('async')
         service.generate (err, results) =>
             return @next err if err?
             agent.log "POST /openvpn/client generation results:", results
+            #add it to the registry
             clientRegistry.add service
+            Objects[service.id] = service
             service.start (err, instance) =>
                 if err?
                     #serverRegistry.remove service.id
                     return @next err
                 else
+                    agent.addServices service
                     @send {id: service.id, running: true}
 
     @del '/openvpn/client/:client': ->
         service = clientRegistry.get @params.client
         return @send 404 unless service?
+        return @send 404 if Objects[service.id] is null
+        service = Objects[service.id]
+        service.stop (res) =>            
+            #remove from the registry    
+            clientRegistry.remove @params.client
+            #remove from the stormflash services list
+            agent.removeServices service
+            #destroy the object
+            service.destructor()
+            service = null        
+            @send 204
 
-        clientRegistry.remove @params.client
-        @send 204
 
     @get '/openvpn/client/:id': ->
         service = clientRegistry.get @params.id
@@ -158,8 +190,9 @@ async = require('async')
 
     @get '/openvpn/client': ->
         @send clientRegistry.list()
+       
 ###########################################################################
-#The following are debug APIs - included for dev testing... will be removed
+#The following are testing APIs - included for dev testing... will be removed
 ############################################################# ##############
     @put '/openvpn/server/:server/stop': ->
         service = serverRegistry.get @params.server
@@ -184,5 +217,4 @@ async = require('async')
                 return @next err
             else
                 return @send {id:service.id , running: true} 
-
 ################################################################

@@ -47,6 +47,13 @@ class OpenvpnService extends StormService
                         vpnconfig += key + "\n"
             callback vpnconfig
 
+
+    update: (include, callback) ->
+        delete @data.id if @data.id 
+        @data = merge @data, include
+        @generate callback
+
+
     destructor: ->
         @eliminate()
         #@out.close()
