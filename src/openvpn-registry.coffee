@@ -6,23 +6,21 @@ OpenvpnClientService = require('./openvpn-service').OpenvpnClient
 OpenvpnServerService = require('./openvpn-service').OpenvpnServer
 
 class OpenvpnRegistry extends StormRegistry
-    constructor: (@svc, filename) ->
+    constructor: (@svc, filename) ->  
         @on 'load', (key,val) ->
-            console.log "restoring #{key} with:",val
-            #entry = new OpenvpnService key,val
+            console.log "restoring #{key} with:",val            
             if @svc is "client"            
-                entry = new OpenvpnClientService key,val
+                entry = new OpenvpnClientService key,val.data
             else
-                entry = new OpenvpnServerService key,val
-
+                entry = new OpenvpnServerService key,val.data
+                console.log "server service successfully created", entry
             if entry?
                 entry.saved = true
                 @add entry
-
+        
         @on 'removed', (entry) ->
             # an entry is removed in Registry
             entry.destructor() if entry.destructor?
-
         super filename
 
     add: (service) ->
@@ -31,23 +29,35 @@ class OpenvpnRegistry extends StormRegistry
         else
             return unless service instanceof OpenvpnServerService 
         #return unless service instanceof OpenvpnService 
+        console.log "add function " , service
         entry = super service.id, service
+        console.log "server service successfully added"
+
+        entry.on "running", (instance) =>
+            console.log "captured running event" , entry.instance
+            #if entry.instance isnt instance
+            entry.instance = instance
+            entry.changed = true    
+            @update entry
+
                 
 
     update: (service) ->
         service.data.instance = service.instance
+        console.log "recevied update call" , service
         super service.id, service
         delete service.data.instance
 
     get: (key) ->
         entry = super key
         return unless entry?
+        entry
 
-        if entry.data? and entry.data 
-            entry.data.id = entry.id
-            entry.data
-        else
-            entry
+        #if entry.data? and entry.data 
+        #    entry.data.id = entry.id
+        #    entry.data
+        #else
+        #    entry
 
 
 class UserData extends StormData

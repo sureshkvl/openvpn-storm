@@ -20,25 +20,32 @@ async = require('async')
     serverRegistry = new OpenvpnRegistry "server", plugindir+"/openvpn-servers.db"
     userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
 
-    Objects = {}
+    #Objects = {}
+
 
     serverRegistry.on 'ready', ->
+        agent.log "serverRegistry ready event triggered"
         for service in @list()
+            agent.log "server service is ", service
             continue unless service instanceof OpenvpnServerService
-
             agent.log "restore: trying to recover:", service
-            do (service) -> service.generate (err) ->
-                if err?
-                    return agent.log "restore: openvpn #{service.id} failed to generate configs!"
-                service.start (err, instance) ->
+
+            agent.log "check service is running already?. pid is ", service.instance
+            if service.instance is null
+                do (service) -> service.generate (err) ->
                     if err?
-                        agent.log "restore: openvpn #{service.id} start failed with:", err
-                    else
-                        agent.log "restore: openvpn #{service.id} start succeeded wtih #{instance}"
+                        return agent.log "restore: openvpn #{service.id} failed to generate configs!"
+                    service.start (err, instance) ->
+                        if err?
+                            agent.log "restore: openvpn #{service.id} start failed with:", err
+                        else
+                            agent.log "restore: openvpn #{service.id} start succeeded wtih #{instance}"
+
     
     clientRegistry.on 'ready', ->
+        agent.log "clientRegistry ready event triggered"
         for service in @list()
-            continue unless service instanceof OpenvpnClientService
+            #continue unless service instanceof OpenvpnClientService
 
             agent.log "restore: trying to recover:", service
             do (service) -> service.generate (err) ->
@@ -62,7 +69,7 @@ async = require('async')
             agent.log "POST /openvpn/server generation results:", results
             #add it to the registry
             serverRegistry.add service
-            Objects[service.id] = service
+            #Objects[service.id] = service
             service.start (err, instance) =>
                 if err?
                     #serverRegistry.remove service.id
@@ -75,8 +82,8 @@ async = require('async')
     @del '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        return @send 404 if Objects[service.id] is null
-        service = Objects[service.id] 
+        #return @send 404 if Objects[service.id] is null
+        #service = Objects[service.id] 
         service.stop (res) =>        
             #remove from the registry    
             serverRegistry.remove @params.server
@@ -84,14 +91,14 @@ async = require('async')
             agent.removeServices service
             #destroy the object
             service.destructor()
-            service = null        
+            #service = null        
             @send 204
 
     @put '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        return @send 404 if Objects[service.id] is null
-        service = Objects[service.id]
+        #return @send 404 if Objects[service.id] is null
+        #service = Objects[service.id]
         service.update @body, (err, results) => 
             return @next err if err?            
             #reload the service with the updated config
@@ -156,7 +163,7 @@ async = require('async')
             agent.log "POST /openvpn/client generation results:", results
             #add it to the registry
             clientRegistry.add service
-            Objects[service.id] = service
+            #Objects[service.id] = service
             service.start (err, instance) =>
                 if err?
                     #serverRegistry.remove service.id
@@ -169,7 +176,7 @@ async = require('async')
         service = clientRegistry.get @params.client
         return @send 404 unless service?
         return @send 404 if Objects[service.id] is null
-        service = Objects[service.id]
+        #service = Objects[service.id]
         service.stop (res) =>            
             #remove from the registry    
             clientRegistry.remove @params.client
@@ -177,7 +184,7 @@ async = require('async')
             agent.removeServices service
             #destroy the object
             service.destructor()
-            service = null        
+            #service = null        
             @send 204
 
 
@@ -197,22 +204,22 @@ async = require('async')
     @put '/openvpn/server/:server/stop': ->
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        obj = Objects[service.id]
-        obj.stop (res) =>
+        #obj = Objects[service.id]
+        service.stop (res) =>
             return @send {id:service.id , stopped: res} 
 
     @put '/openvpn/server/:server/reload': ->
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        obj = Objects[service.id]
-        obj.reload (res) =>
+        #obj = Objects[service.id]
+        service.reload (res) =>
             return @send {id:service.id , reloaded: res} 
 
     @put '/openvpn/server/:server/start': ->
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        obj = Objects[service.id]
-        obj.start (err, instance)=>
+        #obj = Objects[service.id]
+        service.start (err, instance)=>
             if err?
                 return @next err
             else

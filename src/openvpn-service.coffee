@@ -18,7 +18,8 @@ class OpenvpnService extends StormService
         if data.instance?
             @instance = data.instance
             delete data.instance
-
+            
+        console.log @instance
         opts ?= {}
         opts.configPath ?= "/var/stormflash/plugins/openvpn"
         opts.logPath ?= "/var/log/openvpn"
