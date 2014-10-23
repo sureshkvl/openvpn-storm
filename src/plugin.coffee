@@ -6,7 +6,8 @@ OpenvpnServerService = require('./openvpn-service').OpenvpnServer
 async = require('async')
 
 @include = ->
-    agent = @settings.agent
+
+    agent = @settings.agent    
     unless agent?
         throw  new Error "this plugin requires to be running in the context of a valid StormAgent!"
 
@@ -18,19 +19,12 @@ async = require('async')
 
     clientRegistry = new OpenvpnRegistry "client", plugindir+"/openvpn-clients.db"
     serverRegistry = new OpenvpnRegistry "server", plugindir+"/openvpn-servers.db"
-    userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"
+    userRegistry = new OpenvpnUserRegistry plugindir+"/openvpn-users.db"    
 
-    #Objects = {}
-
-
-    serverRegistry.on 'ready', ->
-        agent.log "serverRegistry ready event triggered"
-        for service in @list()
-            agent.log "server service is ", service
+    serverRegistry.on 'ready', ->        
+        for service in @list()            
             continue unless service instanceof OpenvpnServerService
-            agent.log "restore: trying to recover:", service
-
-            agent.log "check service is running already?. pid is ", service.instance
+            agent.log "restore: trying to recover:", service            
             if service.instance is null
                 do (service) -> service.generate (err) ->
                     if err?
@@ -42,20 +36,19 @@ async = require('async')
                             agent.log "restore: openvpn #{service.id} start succeeded wtih #{instance}"
 
     
-    clientRegistry.on 'ready', ->
-        agent.log "clientRegistry ready event triggered"
+    clientRegistry.on 'ready', ->        
         for service in @list()
-            #continue unless service instanceof OpenvpnClientService
-
+            continue unless service instanceof OpenvpnClientService
             agent.log "restore: trying to recover:", service
-            do (service) -> service.generate (err) ->
-                if err?
-                    return agent.log "restore: openvpn #{service.id} failed to generate configs!"
-                service.start  (err, instance) ->
+            if service.instance is null
+                do (service) -> service.generate (err) ->
                     if err?
-                        agent.log "restore: openvpn #{service.id} invoke failed with:", err
-                    else
-                        agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
+                        return agent.log "restore: openvpn #{service.id} failed to generate configs!"
+                    service.start  (err, instance) ->
+                        if err?
+                            agent.log "restore: openvpn #{service.id} invoke failed with:", err
+                        else
+                            agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
     
 
     @post '/openvpn/server': ->
@@ -68,11 +61,9 @@ async = require('async')
             return @next err if err?
             agent.log "POST /openvpn/server generation results:", results
             #add it to the registry
-            serverRegistry.add service
-            #Objects[service.id] = service
+            serverRegistry.add service            
             service.start (err, instance) =>
-                if err?
-                    #serverRegistry.remove service.id
+                if err?                    
                     return @next err
                 else
                     #add it to stormflash services list
@@ -82,23 +73,18 @@ async = require('async')
     @del '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        #return @send 404 if Objects[service.id] is null
-        #service = Objects[service.id] 
         service.stop (res) =>        
             #remove from the registry    
             serverRegistry.remove @params.server
             #remove from the stormflash services list
             agent.removeServices service
-            #destroy the object
-            service.destructor()
-            #service = null        
+            #cleanup routine
+            service.destructor()            
             @send 204
 
     @put '/openvpn/server/:server': ->  
         service = serverRegistry.get @params.server
         return @send 404 unless service?
-        #return @send 404 if Objects[service.id] is null
-        #service = Objects[service.id]
         service.update @body, (err, results) => 
             return @next err if err?            
             #reload the service with the updated config
@@ -162,11 +148,9 @@ async = require('async')
             return @next err if err?
             agent.log "POST /openvpn/client generation results:", results
             #add it to the registry
-            clientRegistry.add service
-            #Objects[service.id] = service
+            clientRegistry.add service            
             service.start (err, instance) =>
-                if err?
-                    #serverRegistry.remove service.id
+                if err?                    
                     return @next err
                 else
                     agent.addServices service
@@ -174,19 +158,15 @@ async = require('async')
 
     @del '/openvpn/client/:client': ->
         service = clientRegistry.get @params.client
-        return @send 404 unless service?
-        return @send 404 if Objects[service.id] is null
-        #service = Objects[service.id]
+        return @send 404 unless service?       
         service.stop (res) =>            
             #remove from the registry    
             clientRegistry.remove @params.client
             #remove from the stormflash services list
             agent.removeServices service
             #destroy the object
-            service.destructor()
-            #service = null        
+            service.destructor()            
             @send 204
-
 
     @get '/openvpn/client/:id': ->
         service = clientRegistry.get @params.id

@@ -13,7 +13,7 @@ class OpenvpnRegistry extends StormRegistry
                 entry = new OpenvpnClientService key,val.data
             else
                 entry = new OpenvpnServerService key,val.data
-                console.log "server service successfully created", entry
+                #console.log "server service successfully created", entry
             if entry?
                 entry.saved = true
                 @add entry
@@ -27,24 +27,16 @@ class OpenvpnRegistry extends StormRegistry
         if @svc is "client"
             return unless service instanceof OpenvpnClientService 
         else
-            return unless service instanceof OpenvpnServerService 
-        #return unless service instanceof OpenvpnService 
-        console.log "add function " , service
-        entry = super service.id, service
-        console.log "server service successfully added"
+            return unless service instanceof OpenvpnServerService         
+        entry = super service.id, service        
 
         entry.on "running", (instance) =>
-            console.log "captured running event" , entry.instance
-            #if entry.instance isnt instance
             entry.instance = instance
             entry.changed = true    
             @update entry
 
-                
-
     update: (service) ->
-        service.data.instance = service.instance
-        console.log "recevied update call" , service
+        service.data.instance = service.instance        
         super service.id, service
         delete service.data.instance
 
