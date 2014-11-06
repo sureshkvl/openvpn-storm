@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="Frisby Test: 1.POST_server" errors="0" tests="1" failures="0" time="0.642" timestamp="2014-11-06T12:59:15">
+  <testcase classname="Frisby Test: 1.POST_server" name="
+	[ POST http://192.168.122.94:5000/openvpn/server ]" time="0.642"></testcase>
+</testsuite>
+</testsuites>

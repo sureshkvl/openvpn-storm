@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="Frisby Test: 4.Delete_Server" errors="0" tests="1" failures="0" time="0.012" timestamp="2014-11-06T12:59:15">
+  <testcase classname="Frisby Test: 4.Delete_Server" name="
+	[ DELETE http://192.168.122.94:5000/openvpn/server/d1a2d9fa-832e-4f33-9a2d-1b4cb1c9bc1f ]" time="0.011"></testcase>
+</testsuite>
+</testsuites>
