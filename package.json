@@ -16,7 +16,8 @@
     "stormdata": ">=1.2.0",
     "stormregistry": ">=1.2.0",
     "stormservice": ">=1.0.2",
-    "fmerge":">=1.1.0"
+    "fmerge": ">=1.1.0",
+    "mocha": "x"
   },
   "engines": {
     "node": ">=0.6.x"
@@ -41,9 +42,14 @@
     }
   },
   "scripts": {
-    "prepublish": "mkdir -p lib; coffee -o lib -c src"
+    "prepublish": "mkdir -p lib; coffee -o lib -c src",
+    "test": "mocha test"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "~2.0.1",
+    "chai": "~1.10.0",
+    "sinon": "~1.11.1"
+  },
   "optionalDependencies": {},
   "keywords": [
     "openvpn",

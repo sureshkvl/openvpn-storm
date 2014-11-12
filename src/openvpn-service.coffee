@@ -159,5 +159,6 @@ class OpenvpnClientService extends OpenvpnService
 module.exports.OpenvpnService = OpenvpnService
 module.exports.OpenvpnClient = OpenvpnClientService
 module.exports.OpenvpnServer = OpenvpnServerService
-
+module.exports.add = (a,b)->
+    a + b
 
