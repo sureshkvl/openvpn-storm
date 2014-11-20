@@ -34,7 +34,7 @@ async = require('async')
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
                         agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
-    
+
     clientRegistry.on 'ready', ->
         for service in @list()
             continue unless service instanceof OpenvpnClientService
@@ -48,14 +48,15 @@ async = require('async')
                         agent.log "restore: openvpn #{service.id} invoke failed with:", err
                     else
                         agent.log "restore: openvpn #{service.id} invoke succeeded wtih #{instance}"
-    
+
 
     @post '/openvpn/server': ->
         try
             service = new OpenvpnServerService null, @body, {}
+            service.management = "/var/stormflash/plugin/openvpn/#{service.id}/openvpnmgmt.sock"
         catch err
             return @next err
-            
+
         service.generate (err, results) =>
             return @next err if err?
             agent.log "POST /openvpn/server generation results:", results
@@ -66,7 +67,7 @@ async = require('async')
                     return @next err
                 else
                     @send {id: service.id, running: true}
-    
+
     @del '/openvpn/server/:server': ->
         service = serverRegistry.get @params.server
         return @send 404 unless service?
@@ -101,7 +102,7 @@ async = require('async')
         ulist = userRegistry.list()
         server = serverRegistry.get serverId
         if ulist
-            for entry in ulist                
+            for entry in ulist
                 user = entry if entry and entry.cname is userId
         return @send 400 unless serverId? and user? and server?
         userRegistry.deleteuser server, user,  (res) =>
@@ -156,4 +157,4 @@ async = require('async')
     @get '/openvpn/client': ->
         @send clientRegistry.list()
 
-    
+

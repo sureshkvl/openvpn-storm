@@ -155,9 +155,50 @@ class OpenvpnClientService extends OpenvpnService
 
         super id, data, opts
 
+class OpenvpnMgmtClient
+
+    net = require("net")
+    
+    constructor: (context) ->
+
+        @client = null
+
+    #Method to start vpn mgmt client
+    connect: (options, callback) ->
+        @client = net.connect options, (result) =>
+            @client.setEncoding 'utf8'
+            callback null, @client
+        @client.on 'error', (err) =>
+            @settings.agent.log 'vpn mgmt client connection error :', err.message
+            return callback err, null
+        @client.on 'end',() =>
+            @settings.agent.log 'vpn mgmt client disconnected :'
+
+    execute: (command, callback) ->
+        if @client?
+            @settings.agent.log "command ", command
+            @client.write command
+            @client.on "data", (data) =>
+                @settings.agent.log "in client data ", data
+                @settings.agent.log "vpn mgmt parsing data ", data.toString()
+                message = String(data)
+                if (message.indexOf ('ERROR')) >= 0
+                    callback 'error in executing command', null
+                else
+                    callback null, true
+        else
+            callback "error", null
+
+    disconnect: ->
+        try
+            @client.end()
+        catch err
+            @settings.agent.log "unable to properly terminate vpn mgmt client: #{@client}", err
+
 
 module.exports.OpenvpnService = OpenvpnService
 module.exports.OpenvpnClient = OpenvpnClientService
 module.exports.OpenvpnServer = OpenvpnServerService
+module.exports.OpenvpnMgmtClient = OpenvpnMgmtClient
 
 
