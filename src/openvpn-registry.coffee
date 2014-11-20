@@ -139,7 +139,7 @@ class OpenvpnUserRegistry extends StormRegistry
                 mgmtClient.connect options, (err, client) =>
                     unless err
                         cmd = "kill #{cname}"
-                        mgmtClient.handleAction cmd, (err, result) =>
+                        mgmtClient.execute cmd, (err, result) =>
                             mgmtClient.disconnect()
                             callback(true)
                     else
