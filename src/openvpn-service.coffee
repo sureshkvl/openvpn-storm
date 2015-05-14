@@ -45,6 +45,9 @@ class OpenvpnService extends StormService
                         vpnconfig += key + ' ' + val + "\n"
                     when "boolean"
                         vpnconfig += key + "\n"
+            #hack - add the management console configuration
+            vpnconfig += "management #{@configPath}/#{@id}_mgmt.sock  unix" + "\n"
+
             callback vpnconfig
 
     destructor: ->

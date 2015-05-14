@@ -125,7 +125,7 @@ class OpenvpnUserRegistry extends StormRegistry
         filename = ccdpath + "/" + "#{file}"        
         exists = path.existsSync filename
         options =
-            path:"/var/stormflash/plugin/openvpn/#{server.id}/openvpnmgmt.sock"
+            path:"/var/stormflash/plugins/openvpn/#{server.id}_mgmt.sock"
         mgmtClient = new OpenvpnMgmtClient null
 
         if not exists
