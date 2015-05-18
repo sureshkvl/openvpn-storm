@@ -138,7 +138,7 @@ class OpenvpnUserRegistry extends StormRegistry
                 console.log 'removed file'
                 mgmtClient.connect options, (err, client) =>
                     unless err
-                        cmd = "kill #{cname}"
+                        cmd = "kill #{cname}\n"
                         mgmtClient.execute cmd, (err, result) =>
                             mgmtClient.disconnect()
                             callback(true)
