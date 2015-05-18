@@ -172,18 +172,18 @@ class OpenvpnMgmtClient
             @client.setEncoding 'utf8'
             callback null, @client
         @client.on 'error', (err) =>
-            @settings.agent.log 'vpn mgmt client connection error :', err.message
+            console.log 'vpn mgmt client connection error :', err.message
             return callback err, null
         @client.on 'end',() =>
-            @settings.agent.log 'vpn mgmt client disconnected :'
+            console.log 'vpn mgmt client disconnected :'
 
     execute: (command, callback) ->
         if @client?
-            @settings.agent.log "command ", command
+            console.log "command ", command
             @client.write command
             @client.on "data", (data) =>
-                @settings.agent.log "in client data ", data
-                @settings.agent.log "vpn mgmt parsing data ", data.toString()
+                console.log "in client data ", data
+                console.log "vpn mgmt parsing data ", data.toString()
                 message = String(data)
                 if (message.indexOf ('ERROR')) >= 0
                     callback 'error in executing command', null
@@ -196,7 +196,7 @@ class OpenvpnMgmtClient
         try
             @client.end()
         catch err
-            @settings.agent.log "unable to properly terminate vpn mgmt client: #{@client}", err
+            console.log "unable to properly terminate vpn mgmt client: #{@client}", err
 
 
 module.exports.OpenvpnService = OpenvpnService
