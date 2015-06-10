@@ -155,7 +155,8 @@ class OpenvpnClientService extends OpenvpnService
 
         super id, data, opts
 
-
+Manager = require('./policy')
+module.exports.Manager = Manager
 module.exports.OpenvpnService = OpenvpnService
 module.exports.OpenvpnClient = OpenvpnClientService
 module.exports.OpenvpnServer = OpenvpnServerService
