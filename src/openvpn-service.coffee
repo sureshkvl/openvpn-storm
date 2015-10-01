@@ -1,6 +1,11 @@
 StormService = require('stormservice')
 merge = require('fmerge')
 fs = require('fs')
+path = require 'path'
+exec = require('child_process').exec
+
+ServerSchema = require('./schema').server
+ClientSchema = require('./schema').client
 
 class OpenvpnService extends StormService
 
@@ -34,18 +39,47 @@ class OpenvpnService extends StormService
 
         @configs.service.generator = (callback) =>
             vpnconfig = ''
+            #certificates processing
+
+            dir = "#{@configPath}/#{@id}"             
+            fs.mkdirSync(dir) unless fs.existsSync dir
+
+            for cert in @data.certificates
+                filename = switch cert.name
+                    when "ca" then @data.ca
+                    when "dh" then @data.dh
+                    when "cert"  then @data.cert
+                    when "key"  then @data.key
+                path = "#{dir}/#{filename}"
+                console.log "path"
+                fs.writeFileSync path, new Buffer(cert.data || '',"base64")
+
             for key, val of @data
                 switch (typeof val)
                     when "object"
                         if val instanceof Array
                             for i in val
+                                # certs are not processed here
                                 vpnconfig += "#{key} #{i}\n" if key is "route"
                                 vpnconfig += "#{key} \"#{i}\"\n" if key is "push"
                     when "number", "string"
-                        vpnconfig += key + ' ' + val + "\n"
+                        if key in ['ca','dh','cert','key']
+                            vpnconfig += key + ' ' + "#{dir}/#{val}" + "\n"
+                        else
+                            vpnconfig += key + ' ' + val + "\n"
                     when "boolean"
                         vpnconfig += key + "\n"
             callback vpnconfig
+
+    updateService: (newdata, callback)->
+        @data = merge @data, newdata
+        #create ccd directory
+        ccdpath = newdata["client-config-dir"]
+        if ccdpath?
+            try
+                fs.mkdir "#{ccdpath}", () ->
+            catch err
+        @generate callback
 
     destructor: ->
         @eliminate()
@@ -58,53 +92,7 @@ class OpenvpnServerService extends OpenvpnService
 
     constructor: (id, data, opts) ->
 
-        @schema =
-            name: "openvpn"
-            type: "object"
-            additionalProperties: true
-            properties:
-                id:                 {"type":"string", "required":false}
-                port:                {"type":"number", "required":true}
-                dev:                 {"type":"string", "required":true}
-                proto:               {"type":"string", "required":true}
-                ca:                  {"type":"string", "required":true}
-                dh:                  {"type":"string", "required":true}
-                cert:                {"type":"string", "required":true}
-                key:                 {"type":"string", "required":true}
-                server:              {"type":"string", "required":true}
-                'ifconfig-pool-persist': {"type":"string", "required":false}
-                'script-security':   {"type":"string", "required":false}
-                multihome:           {"type":"boolean", "required":false}
-                management:          {"type":"string", "required":false}
-                cipher:              {"type":"string", "required":false}
-                'tls-cipher':        {"type":"string", "required":false}
-                auth:                {"type":"string", "required":false}
-                topology:            {"type":"string", "required":false}
-                'route-gateway':     {"type":"string", "required":false}
-                'client-config-dir': {"type":"string", "required":false}
-                'ccd-exclusive':     {"type":"boolean", "required":false}
-                'client-to-client':  {"type":"boolean", "required":false}
-                route:
-                    items: { type: "string" }
-                push:
-                    items: { type: "string" }
-                'tls-timeout':       {"type":"number", "required":false}
-                'max-clients':       {"type":"number", "required":false}
-                'persist-key':       {"type":"boolean", "required":false}
-                'persist-tun':       {"type":"boolean", "required":false}
-                status:              {"type":"string", "required":false}
-                keepalive:           {"type":"string", "required":false}
-                'comp-lzo':          {"type":"string", "required":false}
-                sndbuf:              {"type":"number", "required":false}
-                rcvbuf:              {"type":"number", "required":false}
-                txqueuelen:          {"type":"number", "required":false}
-                'replay-window':     {"type":"string", "required":false}
-                'duplicate-cn':      {"type":"boolean", "required":false}
-                'log-append':        {"type":"string", "required":false}
-                verb:                {"type":"number", "required":false}
-                mlock:               {"type":"boolean", "required":false}
-                'tun-mtu':           {"type":"number", "required":false}
-                mssfix:              {"type":"string", "required":false}
+        @schema = ServerSchema
 
         #create ccd directory
         ccdpath = data["client-config-dir"]
@@ -120,39 +108,7 @@ class OpenvpnServerService extends OpenvpnService
 class OpenvpnClientService extends OpenvpnService
     constructor: (id, data, opts) ->
 
-        @schema =
-            name: "openvpn"
-            type: "object"
-            additionalProperties: true
-            properties:
-                id:                  {"type":"string", "required":false}
-                pull:                {"type":"boolean", "required":true}
-                'tls-client':        {"type":"boolean", "required":true}
-                dev:                 {"type":"string", "required":true}
-                proto:               {"type":"string", "required":false}
-                ca:                  {"type":"string", "required":true}
-                dh:                  {"type":"string", "required":false}
-                cert:                {"type":"string", "required":true}
-                key:                 {"type":"string", "required":true}
-                remote:              {"type":"string", "required":true}
-                cipher:              {"type":"string", "required":false}
-                'tls-cipher':        {"type":"string", "required":false}
-                'remote-random':     {"type":"boolean", "required":false}
-                'resolv-retry':      {"type":"string", "required":false}
-                ping:                {"type":"number", "required":false}
-                'ping-restart':      {"type":"number", "required":false}
-                log:                 {"type":"string", "required":false}
-                route:
-                    items: { type: "string" }
-                push:
-                    items: { type: "string" }
-                'persist-key':       {"type":"boolean", "required":false}
-                'persist-tun':       {"type":"boolean", "required":false}
-                status:              {"type":"string", "required":false}
-                'comp-lzo':          {"type":"string", "required":false}
-                verb:                {"type":"number", "required":false}
-                mlock:               {"type":"boolean", "required":false}
-
+        @schema = ClientSchema
         super id, data, opts
 
 
