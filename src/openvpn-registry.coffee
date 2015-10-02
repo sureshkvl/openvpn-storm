@@ -4,6 +4,7 @@ StormData = require 'stormdata'
 OpenvpnService = require('./openvpn-service').OpenvpnService
 OpenvpnClientService = require('./openvpn-service').OpenvpnClient
 OpenvpnServerService = require('./openvpn-service').OpenvpnServer
+OpenvpnMgmtClient = require('./openvpn-service').OpenvpnMgmtClient
 
 class OpenvpnRegistry extends StormRegistry
     constructor: (@svc, filename) ->
@@ -123,6 +124,10 @@ class OpenvpnUserRegistry extends StormRegistry
         file =  if cname then cname else email
         filename = ccdpath + "/" + "#{file}"        
         exists = path.existsSync filename
+        options =
+            path:"/var/stormflash/plugins/openvpn/#{server.id}_mgmt.sock"
+        mgmtClient = new OpenvpnMgmtClient null
+
         if not exists
             console.log 'file removed already'            
             return callback new Error "user is already removed!"
@@ -131,7 +136,14 @@ class OpenvpnUserRegistry extends StormRegistry
                 callback(err)
             else
                 console.log 'removed file'
-                callback(true)
+                mgmtClient.connect options, (err, client) =>
+                    unless err
+                        cmd = "kill #{cname}\n"
+                        mgmtClient.execute cmd, (err, result) =>
+                            mgmtClient.disconnect()
+                            callback(true)
+                    else
+                        return callback new Error "error in disconnecting device from VPN"
 
 module.exports.OpenvpnRegistry  = OpenvpnRegistry
 module.exports.OpenvpnUserRegistry  = OpenvpnUserRegistry
