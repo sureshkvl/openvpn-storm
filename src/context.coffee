@@ -4,6 +4,8 @@ assert = require 'assert'
 Promise = require 'bluebird'
 async = require 'async'
 needle = Promise.promisifyAll(require('needle'))
+utils = require('utils')._
+
 
 schema_user = require('./schema').user
 schema_server = require('./schema').server
@@ -18,6 +20,100 @@ getPromise = ->
     return new Promise (resolve, reject) ->
         resolve()
 
+
+Start =  (context) ->
+    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
+    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+
+    servers =  context.service.servers  unless utils.isEmpty(context.service.servers)
+    clients =  context.service.clients  unless utils.isEmpty(context.service.clients)
+    
+    getPromise()
+    .then (resp) =>
+        if servers?
+            Promise.map servers, (server) ->
+                needle.postAsync context.baseUrl + "/openvpn/server", server.config, json:true
+                .then (resp) =>
+                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+                    server.instance = resp[1].id
+                    return { id: resp[1].id }            
+                .catch (err) =>
+                    throw err
+            .then (resp) =>
+                return resp
+            .catch (err) =>
+                throw err
+    .then (resp) =>
+        if clients?
+            Promise.map clients, (client) ->
+                needle.postAsync context.baseUrl + "/openvpn/client", client.config, json:true
+                .then (resp) =>
+                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+                    client.instance = resp[1].id
+                    return { id: resp[1].id }            
+                .catch (err) =>
+                    throw err
+            .then (resp) =>
+                return resp
+            .catch (err) =>
+                throw err
+    .then (resp) =>
+        return context
+
+    .catch (err) =>
+        throw err
+
+Stop = (context) ->
+    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+
+    servers =  context.service.servers  unless utils.isEmpty(context.service.servers)
+    clients =  context.service.clients  unless utils.isEmpty(context.service.clients)
+   
+    getPromise()
+    .then (resp) =>
+        if servers?
+            Promise.map servers, (server) ->
+                needle.deleteAsync context.baseUrl + "/openvpn/server/#{server.instance}", json:true
+                .then (resp) =>
+                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204                    
+                    return "done"            
+                .catch (err) =>
+                    throw err
+            .then (resp) =>
+                return resp
+            .catch (err) =>
+                throw err
+    .then (resp) =>
+        if clients?
+            Promise.map clients, (client) ->
+                needle.deleteAsync context.baseUrl + "/openvpn/client/#{client.instance}", json:true
+                .then (resp) =>
+                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204                    
+                    return "done"            
+                .catch (err) =>
+                    throw err
+            .then (resp) =>
+                return resp
+            .catch (err) =>
+                throw err
+    .then (resp) =>
+        return context
+
+    .catch (err) =>
+        throw err
+
+Update =  (context) ->
+    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
+    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+
+    #step1. process all the server array. if instance is not preset - assume that is new server.  post the server and update the instance id
+    #step2: process all the server arry which has instance in it,  (diff with old history is present , put  the server cofnig)
+    #step3: process all the users array - if user is not present in history then user post
+    #                                          if history user is not in the list, then delete the user
+    #step4: process all the clients array : if instance is not present - assume that is the new client . post it
+    #step5: process all the clients array : if instance is  present - (diff with old history,put the client config if required)
+
+###
 delUser = (URL,id,user) ->
     getPromise()
     .then (resp) =>     
@@ -172,9 +268,9 @@ Update = (context) ->
     console.log ExistingUsers
     console.log context.history.server.users 
     console.log context
-    
+###
 
 module.exports.start = Start
 module.exports.stop = Stop
-module.exports.update = Update
-module.exports.validate = Validate
+#module.exports.update = Update
+#module.exports.validate = Validate

@@ -13,7 +13,7 @@ if argv.h?
         -U <json filename> - Update with the given json file input, Multiple files can be separated by comma ,  .
     """
 	return
-
+context = {}
 config =
 	startjson: argv.S 
 	stopjson: argv.s 
@@ -26,8 +26,8 @@ unless config.startjson? or config.stopjson? or config.updatejson?
 	return
 
 #console.log "config.updatejson  ", config.updatejson
-updatefiles = []
-updatefiles = config.updatejson.split ","
+#updatefiles = []
+#updatefiles = config.updatejson.split ","
 
 #console.log "updatefiles ", updatefiles
 
@@ -37,10 +37,10 @@ getPromise = ->
 
 startcall = ()->
 	#console.log "processing the start "
-	console.log "Processing the  Start file.. ",config.startjson
+	#console.log "Processing the  Start file.. ",config.startjson
 	jsonfile.readFile config.startjson,(err,obj)->
 		console.log err if err?
-		console.log "JSON Input ", obj
+		#console.log "JSON Input ", obj
 
 		getPromise()
 		.then (resp) =>
@@ -48,9 +48,8 @@ startcall = ()->
 		.catch (err) =>
 			console.log "Start err ", err
 		.then (resp) =>
-			console.log "result from Start:\n "
-			instances = resp.instances
-			console.log resp.instances
+			context = resp
+			console.log "result from Start:\n ", JSON.stringify context			
 		.done
 
 updatecall = (filename)->
@@ -72,25 +71,19 @@ updatecall = (filename)->
 		.done
 
 
-
 stopcall = ()->
-	#console.log "processing the start "
-	console.log "Processing the  Stop file.. ",config.stopjson
-	jsonfile.readFile config.stopjson,(err,obj)->
-		console.log err if err?		
-		unless obj.instances? 
-			obj.instances = instances if instances isnt null?
-		console.log "JSON Input ", obj
-		getPromise()
-		.then (resp) =>
-			return Stop obj
-		.catch (err) =>
-			console.log "Stop err ", err
-		.then (resp) =>
-			console.log "result from Stop:\n ",resp
-		.done
+	getPromise()
+	.then (resp) =>
+		console.log "stop context is ", context
+		return Stop context
+	.catch (err) =>
+		console.log "Stop err ", err
+	.then (resp) =>
+		console.log "result from Stop:\n ",resp
+	.done
 
-startcall() if config.startjson?
-for fn in updatefiles
-	setTimeout(updatecall,15000,fn) if config.updatejson?	
+if config.startjson?
+	startcall() 
+#for fn in updatefiles
+#	setTimeout(updatecall,15000,fn) if config.updatejson?	
 setTimeout(stopcall, 15000) if config.stopjson?
