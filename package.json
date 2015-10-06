@@ -16,7 +16,9 @@
     "stormdata": "1.2.2",
     "stormregistry": "1.3.2",
     "stormservice": "1.0.5",
-    "fmerge":"1.2.0"
+    "fmerge":"1.2.0",
+    "deep-diff": "*",
+    "utils": "*"
   },
   "engines": {
     "node": ">=0.6.x"

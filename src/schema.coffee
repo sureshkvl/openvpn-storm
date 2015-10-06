@@ -94,10 +94,10 @@ schema_user =
     type: "object"
     additionalProperties: true
     properties:
-        id:      { type: "string", required: false}
-        email:   { type: "string", required: false}
-        cname:   { type: "string", required: false}
-        ccdPath: { type: "string", required: false}
+        id:      { type: "string", required: true}
+        email:   { type: "string", required: true}
+        cname:   { type: "string", required: true}
+        ccdPath: { type: "string", required: true}
         push:
             items: { type: "string" }
 

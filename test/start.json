@@ -39,7 +39,7 @@
             "instance":{},
             "users":[],
             "history":{
-                "users":[]
+                "config":{},"users":[]                
                 }
             }
         ],
