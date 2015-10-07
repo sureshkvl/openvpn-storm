@@ -1,0 +1,27 @@
+{
+    "baseUrl": "http://localhost:5000",
+    "bInstalledPackages": true,
+    "bFactoryPush": false,
+    "service":{
+        "name": "openvpn",
+        "policyConfig" : {
+            "openvpn" : {
+                "server": {
+                    "enable": true,     
+                    "users":[                         
+                        {                            
+                        "email": "sureshkumar10@calsoftlabs.com",
+                        "cname": "12_F8_A1_14_34_5C@device.intercloud.net",
+                        "push": [
+                            "dhcp-option DNS 8.8.8.8",
+                            "ip-win32 dynamic",
+                            "route-delay 5",
+                            "redirect-gateway def1"
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

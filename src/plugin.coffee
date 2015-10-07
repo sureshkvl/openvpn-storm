@@ -74,6 +74,16 @@ async = require('async')
         serverRegistry.remove @params.server
         @send 204
 
+    @put '/openvpn/server/:server': ->
+        service = serverRegistry.get @params.server
+        return @send 404 unless service?
+
+        # when a service is CHANGED, it emits "ready"
+        service.updateService @body, (err, results) =>
+            return @next err if err?
+            agent.log "update :", results
+            @send { updated: true }
+
 
     @post '/openvpn/server/:server/users': ->
         serverId = @params.server
@@ -86,7 +96,7 @@ async = require('async')
         for user in users
             do (user) ->
                 tasks[user.id] = (callback) ->
-                    user.ccdpath = server["client-config-dir"]
+                    user.ccdpath = server.data["client-config-dir"]
                     entry = userRegistry.add user.id, user
                     userRegistry.adduser entry
                     callback null, entry
@@ -104,7 +114,7 @@ async = require('async')
             for entry in ulist                
                 user = entry if entry and entry.cname is userId
         return @send 400 unless serverId? and user? and server?
-        userRegistry.deleteuser server, user,  (res) =>
+        userRegistry.deleteuser server.data, user,  (res) =>
             unless res instanceof Error
                 userRegistry.remove user.id
                 @send {deleted: true}
@@ -116,7 +126,9 @@ async = require('async')
         unless service?
             @send 404
         else
-            @send service
+            #service.data.id = service.id
+            @send service.data
+
 
     @get '/openvpn/server': ->
         @send serverRegistry.list()
@@ -146,12 +158,24 @@ async = require('async')
         clientRegistry.remove @params.client
         @send 204
 
+    @put '/openvpn/client/:client': ->
+        service = clientRegistry.get @params.client
+        return @send 404 unless service?
+
+        # when a service is CHANGED, it emits "ready"
+        service.updateService @body, (err, results) =>
+            return @next err if err?
+            agent.log "update :", results
+            @send { updated: true }
+
+
     @get '/openvpn/client/:id': ->
         service = clientRegistry.get @params.id
         unless service?
             @send 404
         else
-            @send service
+            #service.data.id = service.id
+            @send service.data            
 
     @get '/openvpn/client': ->
         @send clientRegistry.list()

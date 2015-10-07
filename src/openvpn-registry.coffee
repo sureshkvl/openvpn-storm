@@ -43,6 +43,17 @@ class OpenvpnRegistry extends StormRegistry
         super service.id, service
         delete service.data.instance
 
+    list : () ->
+        #services = []
+        results = []
+        result = {}
+        services = super        
+        for service in services            
+            result = service.data
+            result.id = service.id
+            results.push result
+        results
+###
     get: (key) ->
         entry = super key
         return unless entry?
@@ -52,21 +63,11 @@ class OpenvpnRegistry extends StormRegistry
             entry.data
         else
             entry
-
+###
 
 class UserData extends StormData
 
-    userSchema =
-        name: "openvpn"
-        type: "object"
-        additionalProperties: true
-        properties:
-            id:      { type: "string", required: false}
-            email:   { type: "string", required: false}
-            cname:   { type: "string", required: false}
-            ccdPath: { type: "string", required: false}
-            push:
-                items: { type: "string" }
+    userSchema = require('./schema').user
 
     constructor: (id, data) ->
         super id, data, userSchema
@@ -122,6 +123,7 @@ class OpenvpnUserRegistry extends StormRegistry
         email = user["email"]
         file =  if cname then cname else email
         filename = ccdpath + "/" + "#{file}"        
+        console.log filename
         exists = path.existsSync filename
         if not exists
             console.log 'file removed already'            
