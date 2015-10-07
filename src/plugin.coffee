@@ -158,6 +158,17 @@ async = require('async')
         clientRegistry.remove @params.client
         @send 204
 
+    @put '/openvpn/client/:client': ->
+        service = clientRegistry.get @params.client
+        return @send 404 unless service?
+
+        # when a service is CHANGED, it emits "ready"
+        service.updateService @body, (err, results) =>
+            return @next err if err?
+            agent.log "update :", results
+            @send { updated: true }
+
+
     @get '/openvpn/client/:id': ->
         service = clientRegistry.get @params.id
         unless service?

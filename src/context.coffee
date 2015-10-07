@@ -171,17 +171,20 @@ Update =  (context) ->
                         needle.putAsync context.baseUrl + "/openvpn/server/#{server.instance}", server.config, json:true
                         .then (resp) =>
                             throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
-                            server.history.config = server.config
+                            server.history.config = utils.extend {},server.config
                             return server
                         .catch (err) =>
-                            throw err              
+                            throw err           
                     #find the diff between the current users and history users
                     #console.log "server.config.users", server.users
                     #console.log "server.history.users", server.history.users
-                    currentusers = server.users
+                    server.users ?= []
+                    server.history.users ?= []
+                    currentusers = server.users                     
                     historyusers = server.history.users
-                    #console.log "currentusers", currentusers
-                    #console.log "historyusers",historyusers
+                    console.log "currentusers", currentusers
+                    console.log "historyusers",historyusers                
+                    
 
                     for user in currentusers when not utils.isEmpty(currentusers)
                         result =  UserExists(historyusers, user.id)
@@ -201,12 +204,14 @@ Update =  (context) ->
                             console.log "this user is a removed user- To be deleted", user
                             needle.deleteAsync context.baseUrl + "/openvpn/server/#{server.instance}/users/#{user.cname}", json:true
                             .then (resp) =>
-                                throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                                
+                                console.log "response code is", resp[0].statusCode
+                                throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
                                 historyusers.pop user
                                 return resp.body
                             .catch (err) =>
                                 throw err                                      
             .then (resp)=>
+                console.log "\n\npromise map - servers response are ", resp
                 return resp
             .catch (err)=>
                 throw err
@@ -220,8 +225,7 @@ Update =  (context) ->
                         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
                         client.instance = resp[1].id
                         client.history ?= {}
-                        client.history.config = utils.extend {},client.config
-                        client.history.users = []
+                        client.history.config = utils.extend {},client.config                    
                         return client
                     .catch (err) =>
                         throw err        
@@ -231,15 +235,17 @@ Update =  (context) ->
                     unless utils.isEmpty(differences) or  not differences?
                         needle.putAsync context.baseUrl + "/openvpn/client/#{client.instance}", client.config, json:true
                         .then (resp) =>
+                            console.log "respo code", resp[0].statusCode
                             throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
-                            client.history.config = client.config
+                            client.history.config = utils.extend {},client.config
                             return client   
                         .catch (err) =>
                             throw err                
 
 
     .then (resp)=>
-        return resp
+        console.log "\n\n\nfinal response", resp
+        return context
     .catch (err)=>
         throw err
 
