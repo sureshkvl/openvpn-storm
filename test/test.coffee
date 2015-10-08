@@ -229,8 +229,7 @@ updatecall1 = ()->
 		console.log "Update err ", err
 	.then (resp) =>
 		console.log "result from Update:\n "			
-		console.log resp
-		context = resp
+		console.log JSON.stringify resp		
 	.done
 
 updatecall2 = ()->
@@ -278,7 +277,7 @@ updatecall4 = ()->
 		console.log "Update err ", err
 	.then (resp) =>
 		console.log "result from Update:\n "			
-		#console.log JSON.stringify resp
+		console.log JSON.stringify resp
 		#context = resp
 	.done
 
@@ -290,8 +289,8 @@ updatecall5 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "			
-		#console.log JSON.stringify resp
+		console.log "result from Update:\n "
+		console.log  JSON.stringify resp
 		#context = resp
 	.done
 
@@ -304,7 +303,7 @@ updatecall6 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "
+		console.log "result from Update:\n ",JSON.stringify resp
 	.done
 
 
@@ -317,7 +316,7 @@ updatecall7 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "
+		console.log "result from Update:\n ",JSON.stringify resp
 	.done
 
 
@@ -335,12 +334,24 @@ stopcall = ()->
 
 
 #main routine
+
+input.service.servers.push server1
+startcall(input) 
+setTimeout(updatecall5,15000)
+setTimeout(updatecall1,30000)
+setTimeout(stopcall,45000)
+console.log "Scenario1 finished"
+
+
+
+
 ###
 #Test 1
 console.log "Scenario1,  Start call - with single server config and Stop it \n\n"
-input.service.servers.push server1
+input.service.server.push server1
 startcall(input) 
-setTimeout(stopcall,15000)
+#setTimeout(updatecall6,15000)
+setTimeout(stopcall,30000)
 console.log "Scenario1 finished"
 
 

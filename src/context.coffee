@@ -20,94 +20,143 @@ getPromise = ->
     return new Promise (resolve, reject) ->
         resolve()
 
+PostServer = (baseUrl,server)->
+    needle.postAsync baseUrl + "/openvpn/server", server.config, json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+        server.instance = resp[1].id
+        server.history ?= {}
+        server.history.config = utils.extend {},server.config
+        server.history.users = []
+        return server
+    .catch (err) =>
+        throw err
+
+PostClient = (baseUrl,client)->
+    needle.postAsync baseUrl + "/openvpn/client", client.config, json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+        client.instance = resp[1].id
+        client.history ?= {}
+        client.history.config = utils.extend {},client.config
+        return client   
+    .catch (err) =>
+        throw err
+
+DeleteServer = (baseUrl,server)->
+    needle.deleteAsync baseUrl + "/openvpn/server/#{server.instance}", json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204    
+        #Todo : delete the server object
+        server = null
+        return server            
+    .catch (err) =>
+        throw err
+
+DeleteClient = (baseUrl,client)->
+    needle.deleteAsync baseUrl + "/openvpn/client/#{client.instance}", json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204     
+        #Todo : delete the client object               
+        client = null
+        return client
+    .catch (err) =>
+        throw err
+
+PutServer = (baseUrl,server)->
+    needle.putAsync baseUrl + "/openvpn/server/#{server.instance}", server.config, json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
+        server.history.config = utils.extend {},server.config
+        return server
+    .catch (err) =>
+        throw err
+
+PutClient = (baseUrl,client)->
+    needle.putAsync baseUrl + "/openvpn/client/#{client.instance}", client.config, json:true
+    .then (resp) =>
+        console.log "respo code", resp[0].statusCode
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+        client.history.config = utils.extend {},client.config
+        return client
+    .catch (err) =>
+        throw err
+
+PostUser = (baseUrl,serverid,user)->
+    needle.postAsync baseUrl + "/openvpn/server/#{serverid}/users", user, json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                                
+        #historyusers.push user
+        return resp.body
+    .catch (err) =>
+        throw err       
+
+
+DeleteUser = (baseUrl,serverid,user)->
+    needle.deleteAsync baseUrl + "/openvpn/server/#{serverid}/users/#{user.cname}", json:true
+    .then (resp) =>
+        console.log "response code is", resp[0].statusCode
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+        #historyusers.pop user
+        return resp.body
+    .catch (err) =>
+        throw err
+
 
 Start =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers  unless utils.isEmpty(context.service.servers)
-    clients =  context.service.clients  unless utils.isEmpty(context.service.clients)
+    servers =  context.service.servers ? [] # unless utils.isEmpty(context.service.servers)
+    clients =  context.service.clients ? [] # unless utils.isEmpty(context.service.clients)
     
     getPromise()
     .then (resp) =>
-        if servers?
-            Promise.map servers, (server) ->
-                needle.postAsync context.baseUrl + "/openvpn/server", server.config, json:true
-                .then (resp) =>
-                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-                    server.instance = resp[1].id
-                    server.history ?= {}
-                    server.history.config = utils.extend {},server.config
-                    server.history.users = []
-                    return server
-                .catch (err) =>
-                    throw err
-            .then (resp) =>
-                return resp
-            .catch (err) =>
-                throw err
+        Promise.map servers, (server) ->
+            return PostServer(context.baseUrl,server)
+        .then (resp) =>
+            return resp
+        .catch (err) =>
+            throw err
     .then (resp) =>
-        if clients?
-            Promise.map clients, (client) ->
-                needle.postAsync context.baseUrl + "/openvpn/client", client.config, json:true
-                .then (resp) =>
-                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-                    client.instance = resp[1].id
-                    client.history ?= {}
-                    client.history.config = utils.extend {},client.config
-                    return client                    
-                .catch (err) =>
-                    throw err
-            .then (resp) =>
-                return resp
-            .catch (err) =>
-                throw err
+        Promise.map clients, (client) ->              
+            return PostClient(context.baseUrl,client)
+        .then (resp) =>
+            return resp
+        .catch (err) =>
+            throw err
     .then (resp) =>
         return context
-
     .catch (err) =>
         throw err
 
 Stop = (context) ->
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers  unless utils.isEmpty(context.service.servers)
-    clients =  context.service.clients  unless utils.isEmpty(context.service.clients)
+    servers =  context.service.servers  ? [] #unless utils.isEmpty(context.service.servers)
+    clients =  context.service.clients  ? [] #unless utils.isEmpty(context.service.clients)
    
     getPromise()
     .then (resp) =>
-        if servers?
-            Promise.map servers, (server) ->
-                needle.deleteAsync context.baseUrl + "/openvpn/server/#{server.instance}", json:true
-                .then (resp) =>
-                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204                    
-                    return "done"            
-                .catch (err) =>
-                    throw err
-            .then (resp) =>
-                return resp
-            .catch (err) =>
-                throw err
+        #if servers?
+        Promise.map servers, (server) ->
+            return DeleteServer(context.baseUrl,server)
+        .then (resp) =>
+            return resp
+        .catch (err) =>
+            throw err
     .then (resp) =>
-        if clients?
-            Promise.map clients, (client) ->
-                needle.deleteAsync context.baseUrl + "/openvpn/client/#{client.instance}", json:true
-                .then (resp) =>
-                    throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204                    
-                    return "done"            
-                .catch (err) =>
-                    throw err
-            .then (resp) =>
-                return resp
-            .catch (err) =>
-                throw err
+        #if clients?
+        Promise.map clients, (client) ->
+            return DeleteClient(context.baseUrl,client)
+        .then (resp) =>
+            return resp
+        .catch (err) =>
+            throw err
     .then (resp) =>
         return context
-
     .catch (err) =>
         throw err
-
-
 
 UserExists = (list,id)->
     for item in list
@@ -115,10 +164,11 @@ UserExists = (list,id)->
             return true
     return false
 
-Update =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
-    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
-    ###
+
+
+
+
+###
     #logic
     step1. iterate the servers array. 
        a. if instance is not preset  - assume this is  a new server.  
@@ -140,76 +190,99 @@ Update =  (context) ->
             i) diff with config and history config 
                 if diff is found, then client config is changed,
                 put the client config 
-    ###
-    servers =  context.service.servers  unless utils.isEmpty(context.service.servers)
-    clients =  context.service.clients  unless utils.isEmpty(context.service.clients)
+###
+
+
+UpdateClient = (baseUrl,client)->
     getPromise()
     .then (resp) =>
-        #step 1 and 2
-        if servers?
-            Promise.map servers, (server) =>    
-                console.log "inside update server map ", server
-                unless server.instance?
-                    console.log "server instance not present .. hence new server case"
-                    needle.postAsync context.baseUrl + "/openvpn/server", server.config, json:true
-                    .then (resp) =>
-                        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-                        server.instance = resp[1].id
-                        server.history ?= {}
-                        server.history.config = utils.extend {},server.config
-                        server.history.users = []
-                        return server
-                    .catch (err) =>
-                        throw err        
-                else if server.instance? and server.config? and server.history.config?
-                    console.log "server instance is present .. hence server modification case"
-                    #find the difference between  server.config , server.history.config 
-                    differences = diff(server.config,server.history.config)     
-                    console.log differences               
-                    unless utils.isEmpty(differences) or  not differences?
-                        console.log "server config difference is found...server put call"
-                        needle.putAsync context.baseUrl + "/openvpn/server/#{server.instance}", server.config, json:true
-                        .then (resp) =>
-                            throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
-                            server.history.config = utils.extend {},server.config
-                            return server
-                        .catch (err) =>
-                            throw err           
+        return PostClient(baseUrl,client) unless client.instance?
+        differences = diff(client.config,client.history.config)                    
+        return PutClient(baseUrl,client) unless utils.isEmpty(differences) or  not differences?
+        return client #no difference in client config
+    .catch (err) =>
+        throw err    
+
+UpdateServer = (baseUrl,server)->
+    getPromise()
+    .then (resp) =>
+        #put server , post server
+        return PostServer(baseUrl,server) unless server.instance?
+        differences = diff(server.config,server.history.config)                    
+        return PutServer(baseUrl,server) unless utils.isEmpty(differences) or  not differences?
+        return server #no difference in server config
+    .catch (err) =>
+        throw err    
+
+Update =  (context) ->
+    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
+    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+
+    servers =  context.service.servers ? []  #unless utils.isEmpty(context.service.servers)
+    clients =  context.service.clients ? [] #unless utils.isEmpty(context.service.clients)
+
+    getPromise()
+    .then (resp) =>
+        #processing the clients array
+        Promise.map clients, (client) =>
+            return UpdateClient(context.baseUrl,client)
+        .then (resp) =>
+            #updateclient response to be validated
+            return resp
+        .catch (err) =>
+            throw err 
+    .then (resp)=>        
+        #processing the servers array 
+        Promise.map servers, (server) =>
+            return UpdateServer(context.baseUrl,server)
+        .then (resp) =>
+            #update server response to be validated here
+            return resp
+        .catch (err)=>
+            throw err
+    .then (response)=>
+        #console.log "Final response",response
+        return context
+    .catch (err)=>
+        throw err
+#a
+###
+        Promise.map servers, (server) =>    
+            console.log "inside update server map ", server
+            unless server.instance?
+                console.log "server instance not present .. hence new server case"
+                return PostServer(context.baseUrl,server)
+
+            else if server.instance? and server.config? and server.history.config?
+                console.log "server instance is present .. hence server modification case"
+                #find the difference between  server.config , server.history.config 
+                differences = diff(server.config,server.history.config)     
+                console.log differences               
+                unless utils.isEmpty(differences) or  not differences?
+                    console.log "server config difference is found...server put call"
+                    return PutServer(context.baseUrl,server)
+                        
                     #find the diff between the current users and history users
                     #console.log "server.config.users", server.users
                     #console.log "server.history.users", server.history.users
-                    server.users ?= []
-                    server.history.users ?= []
-                    currentusers = server.users                     
-                    historyusers = server.history.users
-                    console.log "currentusers", currentusers
-                    console.log "historyusers",historyusers                
+                server.users ?= []
+                server.history.users ?= []
+                currentusers = server.users                     
+                historyusers = server.history.users
+                console.log "currentusers", currentusers
+                console.log "historyusers",historyusers                
                     
 
-                    for user in currentusers when not utils.isEmpty(currentusers)
-                        result =  UserExists(historyusers, user.id)
-                        if result is false
+                for user in currentusers when not utils.isEmpty(currentusers)
+                    result =  UserExists(historyusers, user.id)
+                    if result is false
                             console.log "this user is a new user- To be posted", user
-                            needle.postAsync context.baseUrl + "/openvpn/server/#{server.instance}/users", user, json:true
-                            .then (resp) =>
-                                throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                                
-                                historyusers.push user
-                                return resp.body
-                            .catch (err) =>
-                                throw err       
-
+                            return PostUser user
                     for user in historyusers when not utils.isEmpty(historyusers)
                         result =  UserExists(currentusers, user.id)
                         if result is false
                             console.log "this user is a removed user- To be deleted", user
-                            needle.deleteAsync context.baseUrl + "/openvpn/server/#{server.instance}/users/#{user.cname}", json:true
-                            .then (resp) =>
-                                console.log "response code is", resp[0].statusCode
-                                throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-                                historyusers.pop user
-                                return resp.body
-                            .catch (err) =>
-                                throw err                                      
+                            return DeleteUser
             .then (resp)=>
                 console.log "\n\npromise map - servers response are ", resp
                 return resp
@@ -233,14 +306,7 @@ Update =  (context) ->
                     #find the difference between  server.config , server.history.config 
                     differences = diff(client.config,client.history.config)                    
                     unless utils.isEmpty(differences) or  not differences?
-                        needle.putAsync context.baseUrl + "/openvpn/client/#{client.instance}", client.config, json:true
-                        .then (resp) =>
-                            console.log "respo code", resp[0].statusCode
-                            throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
-                            client.history.config = utils.extend {},client.config
-                            return client   
-                        .catch (err) =>
-                            throw err                
+                        return PutClient               
 
 
     .then (resp)=>
@@ -248,7 +314,7 @@ Update =  (context) ->
         return context
     .catch (err)=>
         throw err
-
+###
 module.exports.start = Start
 module.exports.stop = Stop
 module.exports.update = Update
