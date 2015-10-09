@@ -2,6 +2,7 @@ jsonfile = require('jsonfile')
 Start = require('./../src/context').start
 Stop = require('./../src/context').stop
 Update = require('./../src/context').update
+Validate = require('./../src/context').validate
 Promise = require 'bluebird'
 diff = require('deep-diff').diff
 utils = require('utils')._
@@ -339,7 +340,7 @@ stopcall = ()->
 
 
 #main routine
-
+###
 input.service.servers.push server1
 #input.service.servers.push server2
 #input.service.clients.push client1
@@ -350,10 +351,15 @@ setTimeout(updatecall2,45000)
 setTimeout(updatecall3,90000)
 setTimeout(stopcall,120000)
 console.log "Scenario1 finished"
-
-
-
-
+###
+input.service.servers.push server1
+input.service.servers.push server2
+input.service.servers[0].users ?= []
+input.service.servers[0].users.push user0
+input.service.clients.push client1
+input.service.clients.push client2
+result = Validate(input.service)
+console.log result
 ###
 #Test 1
 console.log "Scenario1,  Start call - with single server config and Stop it \n\n"

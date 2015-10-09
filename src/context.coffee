@@ -1,5 +1,6 @@
-Valid = require('jsonschema').Validator
-Validator = new Valid
+#Valid = require('jsonschema').Validator
+validate = require('json-schema').validate
+#Validator = new Valid
 assert = require 'assert'
 Promise = require 'bluebird'
 async = require 'async'
@@ -14,7 +15,7 @@ schema_client = require('./schema').client
 schema =
     "server": schema_server
     "client": schema_client
-    "user" : schema_server
+    "user" : schema_user
 
 getPromise = ->
     return new Promise (resolve, reject) ->
@@ -280,7 +281,47 @@ Update =  (context) ->
     .catch (err)=>
         throw err
 
+#input to the validate is  { servers:[],clients:[]}
+Validate =  (config) ->
+    throw new Error "openvpn.Validate - invalid input" unless config.servers? and config.clients?
+    for server in config.servers
+        chk = validate server.config, schema['server']        
+        console.log 'server validate result ', chk
+        unless chk.valid
+            throw new Error "server schema check failed"+  chk.valid
+            return  false
+        if server.users?
+            for user in server.users 
+                chk = validate user, schema['user']        
+                console.log 'user validate result ', chk
+                unless chk.valid
+                    throw new Error "user schema check failed"+  chk.valid
+                    return  false
+
+    for client in config.clients
+        chk = validate client.config, schema['client']        
+        console.log 'client validate result ', chk
+        unless chk.valid
+            throw new Error "client schema check failed"+  chk.valid
+            return  false
+
+    return true
+###
+    policyConfig = {}
+    if config.enable and config.coreConfig
+        policyConfig.zebra = config.coreConfig
+    if config.protocol.ospf.enable and config.protocol.ospf.config
+        policyConfig.ospfd = config.protocol.ospf.config
+
+    for name, conf of policyConfig
+        options = {}
+        options.propertyName = name
+        res = Validator.validate conf, schema[name], options
+        if res.errors?.length
+            throw new Error "openvpn.Validate ", res
+###            
+
 module.exports.start = Start
 module.exports.stop = Stop
 module.exports.update = Update
-#module.exports.validate = Validate
+module.exports.validate = Validate
