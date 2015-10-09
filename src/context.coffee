@@ -47,8 +47,8 @@ DeleteServer = (baseUrl,server)->
     needle.deleteAsync baseUrl + "/openvpn/server/#{server.instance}", json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204    
-        #Todo : delete the server object
-        server = null
+        #Todo : delete the server object        
+        #server = null
         return server            
     .catch (err) =>
         throw err
@@ -85,8 +85,7 @@ PutClient = (baseUrl,client)->
 PostUser = (baseUrl,serverid,user)->
     needle.postAsync baseUrl + "/openvpn/server/#{serverid}/users", user, json:true
     .then (resp) =>
-        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                                
-        #historyusers.push user
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
         return resp.body
     .catch (err) =>
         throw err       
@@ -97,7 +96,6 @@ DeleteUser = (baseUrl,serverid,user)->
     .then (resp) =>
         console.log "response code is", resp[0].statusCode
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        #historyusers.pop user
         return resp.body
     .catch (err) =>
         throw err
@@ -107,8 +105,8 @@ Start =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers ? [] # unless utils.isEmpty(context.service.servers)
-    clients =  context.service.clients ? [] # unless utils.isEmpty(context.service.clients)
+    servers =  context.service.servers ? [] 
+    clients =  context.service.clients ? [] 
     
     getPromise()
     .then (resp) =>
@@ -133,12 +131,11 @@ Start =  (context) ->
 Stop = (context) ->
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers  ? [] #unless utils.isEmpty(context.service.servers)
-    clients =  context.service.clients  ? [] #unless utils.isEmpty(context.service.clients)
+    servers =  context.service.servers ? [] 
+    clients =  context.service.clients ? [] 
    
     getPromise()
     .then (resp) =>
-        #if servers?
         Promise.map servers, (server) ->
             return DeleteServer(context.baseUrl,server)
         .then (resp) =>
@@ -146,7 +143,6 @@ Stop = (context) ->
         .catch (err) =>
             throw err
     .then (resp) =>
-        #if clients?
         Promise.map clients, (client) ->
             return DeleteClient(context.baseUrl,client)
         .then (resp) =>
@@ -169,8 +165,16 @@ UserExists = (list,id)->
 
 
 ###
-    #logic
-    step1. iterate the servers array. 
+#Update logic
+    iterate the clients array
+       a. if instance is not present - assume that is the new client . 
+           - post the client and update the instance id, and save the config in the history
+       b. if the instance is present (assume this is the existing running client)
+            i) diff with config and history config 
+                if diff is found, then client config is changed,
+                put the client config 
+    
+    iterate the servers array. 
        a. if instance is not preset  - assume this is  a new server.  
            - post the server and update the instance id, and save the config in history
        b.if instance is present, (assume this is the existing running server) 
@@ -178,18 +182,12 @@ UserExists = (list,id)->
                 if diff is found, then server config is changed,
                 put the server config 
 
-            ii) check the current users aray and history users array              
-                - if current user is not present in the history users 
+       c. check the current users aray and history users array in the server         
+             if current user is not present in the history users 
                       then this is the new user , POST the new user and update it in the history users
-                - if history user is not present in the current users , 
+            if history user is not present in the current users , 
                        then this uses to be deleted. DELETE this user
-    step2: iterate the clients array
-       a. if instance is not present - assume that is the new client . 
-           - post the client and update the instance id, and save the config in the history
-       b. if the instance is present (assume this is the existing running client)
-            i) diff with config and history config 
-                if diff is found, then client config is changed,
-                put the client config 
+    
 ###
 
 
@@ -203,23 +201,59 @@ UpdateClient = (baseUrl,client)->
     .catch (err) =>
         throw err    
 
+
 UpdateServer = (baseUrl,server)->
     getPromise()
     .then (resp) =>
         #put server , post server
-        return PostServer(baseUrl,server) unless server.instance?
+        return  PostServer(baseUrl,server) unless server.instance?
         differences = diff(server.config,server.history.config)                    
-        return PutServer(baseUrl,server) unless utils.isEmpty(differences) or  not differences?
-        return server #no difference in server config
-    .catch (err) =>
+        return  PutServer(baseUrl,server) unless utils.isEmpty(differences) or  not differences?
+        #return resolve server #no difference in server config
+        
+    .then (resp) =>
+
+        currentusers = server.users ? []
+        historyusers = server.history.users ? []
+
+        #process the currentusers array
+        console.log "currentusers ",currentusers
+        Promise.map currentusers, (currentuser) =>
+            console.log "currentuser  ",currentuser
+            result =  UserExists(historyusers, currentuser.id)
+            if result is false
+                historyusers.push currentuser
+                return PostUser(baseUrl,server.instance,currentuser) 
+        .then (resp) =>            
+            return resp
+        .catch (err) =>
+            throw err 
+    .then (resp)=>
+        currentusers = server.users ? []
+        historyusers = server.history.users ? []
+        #process the historyusers array
+        console.log "historyusers ", historyusers
+        Promise.map historyusers, (historyuser) =>
+            console.log "historyuser ", historyuser
+            result =  UserExists(currentusers, historyuser.id)
+            if result is false
+                historyusers.pop historyuser
+                return DeleteUser(baseUrl,server.instance,historyuser)
+        .then (resp) =>            
+            return resp
+        .catch (err) =>
+            throw err 
+    .then (resp)=>
+        return resp
+    .catch (err)=>
         throw err    
 
 Update =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers ? []  #unless utils.isEmpty(context.service.servers)
-    clients =  context.service.clients ? [] #unless utils.isEmpty(context.service.clients)
+    servers =  context.service.servers ? []
+    clients =  context.service.clients ? []
 
     getPromise()
     .then (resp) =>
@@ -245,76 +279,7 @@ Update =  (context) ->
         return context
     .catch (err)=>
         throw err
-#a
-###
-        Promise.map servers, (server) =>    
-            console.log "inside update server map ", server
-            unless server.instance?
-                console.log "server instance not present .. hence new server case"
-                return PostServer(context.baseUrl,server)
 
-            else if server.instance? and server.config? and server.history.config?
-                console.log "server instance is present .. hence server modification case"
-                #find the difference between  server.config , server.history.config 
-                differences = diff(server.config,server.history.config)     
-                console.log differences               
-                unless utils.isEmpty(differences) or  not differences?
-                    console.log "server config difference is found...server put call"
-                    return PutServer(context.baseUrl,server)
-                        
-                    #find the diff between the current users and history users
-                    #console.log "server.config.users", server.users
-                    #console.log "server.history.users", server.history.users
-                server.users ?= []
-                server.history.users ?= []
-                currentusers = server.users                     
-                historyusers = server.history.users
-                console.log "currentusers", currentusers
-                console.log "historyusers",historyusers                
-                    
-
-                for user in currentusers when not utils.isEmpty(currentusers)
-                    result =  UserExists(historyusers, user.id)
-                    if result is false
-                            console.log "this user is a new user- To be posted", user
-                            return PostUser user
-                    for user in historyusers when not utils.isEmpty(historyusers)
-                        result =  UserExists(currentusers, user.id)
-                        if result is false
-                            console.log "this user is a removed user- To be deleted", user
-                            return DeleteUser
-            .then (resp)=>
-                console.log "\n\npromise map - servers response are ", resp
-                return resp
-            .catch (err)=>
-                throw err
-
-        if clients?
-            Promise.map clients, (client) =>    
-                console.log "inside update client map ", client
-                unless client.instance?
-                    needle.postAsync context.baseUrl + "/openvpn/client", client.config, json:true
-                    .then (resp) =>
-                        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-                        client.instance = resp[1].id
-                        client.history ?= {}
-                        client.history.config = utils.extend {},client.config                    
-                        return client
-                    .catch (err) =>
-                        throw err        
-                else if client.instance? and client.config? and client.history.config?
-                    #find the difference between  server.config , server.history.config 
-                    differences = diff(client.config,client.history.config)                    
-                    unless utils.isEmpty(differences) or  not differences?
-                        return PutClient               
-
-
-    .then (resp)=>
-        console.log "\n\n\nfinal response", resp
-        return context
-    .catch (err)=>
-        throw err
-###
 module.exports.start = Start
 module.exports.stop = Stop
 module.exports.update = Update
