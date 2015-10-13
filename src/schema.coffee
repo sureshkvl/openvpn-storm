@@ -98,7 +98,7 @@ schema_user =
         id:      { type: "string", required: true}
         email:   { type: "string", required: true}
         cname:   { type: "string", required: true}
-        ccdPath: { type: "string", required: true}
+        ccdPath: { type: "string", required: false}
         push:
             items: { type: "string" }
 

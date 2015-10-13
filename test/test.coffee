@@ -2,10 +2,10 @@ jsonfile = require('jsonfile')
 Start = require('./../src/context').start
 Stop = require('./../src/context').stop
 Update = require('./../src/context').update
+Validate = require('./../src/context').validate
 Promise = require 'bluebird'
 diff = require('deep-diff').diff
-
-
+utils = require('utils')._
 context = {}
 # input data
 #---------------------------------------------------------------------------------------------
@@ -194,43 +194,36 @@ getPromise = ->
 startcall = (input)->
 	getPromise()
 	.then (resp) =>
+		jsonfile.writeFileSync("/tmp/start-input.json",input,{spaces: 2})
 		return Start input
 	.catch (err) =>
 		console.log "Start err ", err
 	.then (resp) =>
-		context = resp
+		jsonfile.writeFileSync("/tmp/start-output.json",resp,{spaces: 2})
+		context = {}
+		context = utils.extend {},resp
 		console.log "result from Start:\n ", JSON.stringify context
 	.done
-###
-updatecall = (filename)->
-	#console.log "processing the start "
-	console.log "Processing the  Update file.. ",filename
-	jsonfile.readFile filename,(err,obj)->
-		console.log err if err?		
-		unless obj.instances? 
-			obj.instances = instances if instances isnt null?
-		console.log "JSON Input ", obj
-		getPromise()
-		.then (resp) =>
-			return Update obj
-		.catch (err) =>
-			console.log "Update err ", err
-		.then (resp) =>
-			console.log "result from Update:\n "			
-			console.log resp
-		.done
-###
+
 updatecall1 = ()->
 	getPromise()
 	.then (resp) =>
-		context.service.servers[0].config.status = "/var/log/server-status.log"
+		#context.service.servers[0].config.status = "/var/log/server-status.log"
+		#context.service.clients[0].config.port = 40000
+		#context.service.servers.push server2
+		context.service.clients.push client2
+		#input.service.servers.push server2
+		#context.service.servers[1].config.status = "/var/log/server-status.log"
+		jsonfile.writeFileSync("/tmp/update-input.json",context,{spaces: 2})		
 		return Update context
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "			
-		console.log resp
-		context = resp
+		console.log "result from Update:\n "	
+		jsonfile.writeFileSync("/tmp/update-output.json",resp,{spaces: 2})				
+		context = {}
+		context = utils.extend {},resp
+		console.log JSON.stringify resp		
 	.done
 
 updatecall2 = ()->
@@ -239,13 +232,16 @@ updatecall2 = ()->
 		#context.service.servers[0].config.status = "/var/log/server-status.log"
 		context.service.servers[0].users ?= []
 		context.service.servers[0].users.push user0
+		jsonfile.writeFileSync("/tmp/update-input2.json",context,{spaces: 2})				
 		return Update context
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
 		console.log "result from Update history:\n "			
-		console.log JSON.stringify resp.service.servers[0].history.users
-
+		jsonfile.writeFileSync("/tmp/update-output2.json",resp,{spaces: 2})				
+		context = {}
+		context = utils.extend {},resp
+		console.log JSON.stringify resp
 		#context = resp
 	.done
 
@@ -253,15 +249,19 @@ updatecall3 = ()->
 	getPromise()
 	.then (resp) =>
 		#context.service.servers[0].config.status = "/var/log/server-status.log"
-		context.service.servers[0].users ?= []
-		context.service.servers[0].users.push user0
-		context.service.servers[0].users.push user1
-		context.service.servers[0].history.users.push user0
+		context.service.servers[0].users = []
+		#context.service.servers[0].users.push user0
+		#context.service.servers[0].users.push user1
+		#context.service.servers[0].history.users.push user0
+		jsonfile.writeFileSync("/tmp/update-input3.json",context,{spaces: 2})				
 		return Update context
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
 		console.log "result from Update:\n "			
+		jsonfile.writeFileSync("/tmp/update-output3.json",resp,{spaces: 2})				
+		context = {}
+		context = utils.extend {},resp
 		console.log JSON.stringify resp
 		#context = resp
 	.done
@@ -278,7 +278,7 @@ updatecall4 = ()->
 		console.log "Update err ", err
 	.then (resp) =>
 		console.log "result from Update:\n "			
-		#console.log JSON.stringify resp
+		console.log JSON.stringify resp
 		#context = resp
 	.done
 
@@ -290,8 +290,8 @@ updatecall5 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "			
-		#console.log JSON.stringify resp
+		console.log "result from Update:\n "
+		console.log  JSON.stringify resp
 		#context = resp
 	.done
 
@@ -304,7 +304,7 @@ updatecall6 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "
+		console.log "result from Update:\n ",JSON.stringify resp
 	.done
 
 
@@ -317,7 +317,7 @@ updatecall7 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update:\n "
+		console.log "result from Update:\n ",JSON.stringify resp
 	.done
 
 
@@ -325,22 +325,48 @@ updatecall7 = ()->
 stopcall = ()->
 	getPromise()
 	.then (resp) =>
+		jsonfile.writeFileSync("/tmp/stop-input.json",context,{spaces: 2})
 		console.log "stop context is ", context
 		return Stop context
 	.catch (err) =>
 		console.log "Stop err ", err
 	.then (resp) =>
+		jsonfile.writeFileSync("/tmp/stop-output.json",resp,{spaces: 2})
 		console.log "result from Stop:\n ", JSON.stringify resp
+		context = {}
+		context = utils.extend {},resp
+		
 	.done
 
 
 #main routine
 ###
+input.service.servers.push server1
+#input.service.servers.push server2
+#input.service.clients.push client1
+#input.service.clients.push client2
+startcall(input) 
+setTimeout(updatecall1,30000)
+setTimeout(updatecall2,45000)
+setTimeout(updatecall3,90000)
+setTimeout(stopcall,120000)
+console.log "Scenario1 finished"
+###
+input.service.servers.push server1
+input.service.servers.push server2
+input.service.servers[0].users ?= []
+input.service.servers[0].users.push user0
+input.service.clients.push client1
+input.service.clients.push client2
+result = Validate(input.service)
+console.log result
+###
 #Test 1
 console.log "Scenario1,  Start call - with single server config and Stop it \n\n"
-input.service.servers.push server1
+input.service.server.push server1
 startcall(input) 
-setTimeout(stopcall,15000)
+#setTimeout(updatecall6,15000)
+setTimeout(stopcall,30000)
 console.log "Scenario1 finished"
 
 
