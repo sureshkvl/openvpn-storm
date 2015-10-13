@@ -1,8 +1,8 @@
 {
   "name": "openvpn-storm",
   "description": "openvpn-storm is a easy to use module that exposes endpoints to configure openvpn on any linux system",
-  "author": "Ravi Chunduru",
-  "version": "0.4.6",
+  "author": "Clearpath Plugins Team",
+  "version": "0.4.7",
   "repository": {
     "type": "git",
     "url": "git://github.com/stormstack/openvpn-storm.git"
@@ -52,6 +52,7 @@
     "vpn"
   ],
   "contributors": [
+    "Ravi Chunduru",
     "Peter.K.Lee <plee@clearpathnet.com",
     "Geetha R <geethar@calsoftlabs.com",
     "Suresh Kumar <sureshkumar.s@calsoftlabs.com",
