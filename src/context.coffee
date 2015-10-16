@@ -47,9 +47,7 @@ PostClient = (baseUrl,client)->
 DeleteServer = (baseUrl,server)->
     needle.deleteAsync baseUrl + "/openvpn/server/#{server.instance}", json:true
     .then (resp) =>
-        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204    
-        #Todo : delete the server object        
-        #server = null
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
         return server            
     .catch (err) =>
         throw err
@@ -57,9 +55,7 @@ DeleteServer = (baseUrl,server)->
 DeleteClient = (baseUrl,client)->
     needle.deleteAsync baseUrl + "/openvpn/client/#{client.instance}", json:true
     .then (resp) =>
-        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204     
-        #Todo : delete the client object               
-        client = null
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
         return client
     .catch (err) =>
         throw err
@@ -137,9 +133,11 @@ Stop = (context) ->
    
     getPromise()
     .then (resp) =>
-        Promise.map servers, (server) ->
+        Promise.map servers, (server) ->            
             return DeleteServer(context.baseUrl,server)
-        .then (resp) =>
+        .then (resp) =>            
+            servers = utils.difference(servers,resp)            
+            context.service.servers = servers
             return resp
         .catch (err) =>
             throw err
@@ -147,6 +145,8 @@ Stop = (context) ->
         Promise.map clients, (client) ->
             return DeleteClient(context.baseUrl,client)
         .then (resp) =>
+            clients = utils.difference(clients,resp)
+            context.service.clients = clients
             return resp
         .catch (err) =>
             throw err
