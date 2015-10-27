@@ -40,7 +40,7 @@ PostClient = (baseUrl,client)->
         client.instance = resp[1].id
         client.history ?= {}
         client.history.config = utils.extend {},client.config
-        return client   
+        return client
     .catch (err) =>
         throw err
 
@@ -48,7 +48,7 @@ DeleteServer = (baseUrl,server)->
     needle.deleteAsync baseUrl + "/openvpn/server/#{server.instance}", json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
-        return server            
+        return server
     .catch (err) =>
         throw err
 
@@ -63,7 +63,7 @@ DeleteClient = (baseUrl,client)->
 PutServer = (baseUrl,server)->
     needle.putAsync baseUrl + "/openvpn/server/#{server.instance}", server.config, json:true
     .then (resp) =>
-        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
         server.history.config = utils.extend {},server.config
         return server
     .catch (err) =>
@@ -85,7 +85,7 @@ PostUser = (baseUrl,serverid,user)->
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
         return resp.body
     .catch (err) =>
-        throw err       
+        throw err
 
 
 DeleteUser = (baseUrl,serverid,user)->
@@ -105,8 +105,8 @@ Start =  (context) ->
     configObj = context.service.factoryConfig?.config
     config = configObj[context.service.name]
 
-    servers =  config.servers ? [] 
-    clients =  config.clients ? [] 
+    servers =  config.servers ? []
+    clients =  config.clients ? []
     
     #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
     return context if utils.isEmpty(servers) and utils.isEmpty(clients)
@@ -121,7 +121,7 @@ Start =  (context) ->
         .catch (err) =>
             throw err
     .then (resp) =>
-        Promise.map clients, (client) ->              
+        Promise.map clients, (client) ->
             return PostClient(context.baseUrl,client)
         .then (resp) =>
             return resp
@@ -139,18 +139,18 @@ Stop = (context) ->
     #configObj = context.service.factoryConfig?.config
     #config = configObj[context.service.name]
     config = context.policyConfig[context.service.name]
-    servers =  config.servers ? [] 
-    clients =  config.clients ? [] 
+    servers =  config.servers ? []
+    clients =  config.clients ? []
     
     throw new Error "openvpn-storm.Stop missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
     return context unless config.enable is true
    
     getPromise()
     .then (resp) =>
-        Promise.map servers, (server) ->            
+        Promise.map servers, (server) ->
             return DeleteServer(context.baseUrl,server)
-        .then (resp) =>            
-            servers = utils.difference(servers,resp)            
+        .then (resp) =>
+            servers = utils.difference(servers,resp)
             config.servers = servers
             #context.service.servers = servers
             return resp
@@ -209,11 +209,11 @@ UpdateClient = (baseUrl,client)->
     getPromise()
     .then (resp) =>
         return PostClient(baseUrl,client) unless client.instance?
-        differences = diff(client.config,client.history.config)                    
+        differences = diff(client.config,client.history.config)
         return PutClient(baseUrl,client) unless utils.isEmpty(differences) or  not differences?
         return client #no difference in client config
     .catch (err) =>
-        throw err    
+        throw err
 
 
 UpdateServer = (baseUrl,server)->
@@ -221,7 +221,7 @@ UpdateServer = (baseUrl,server)->
     .then (resp) =>
         #put server , post server
         return  PostServer(baseUrl,server) unless server.instance?
-        differences = diff(server.config,server.history.config)                    
+        differences = diff(server.config,server.history.config)
         return  PutServer(baseUrl,server) unless utils.isEmpty(differences) or  not differences?
         #return resolve server #no difference in server config
         
@@ -237,11 +237,11 @@ UpdateServer = (baseUrl,server)->
             result =  UserExists(historyusers, currentuser.id)
             if result is false
                 historyusers.push currentuser
-                return PostUser(baseUrl,server.instance,currentuser) 
-        .then (resp) =>            
+                return PostUser(baseUrl,server.instance,currentuser)
+        .then (resp) =>
             return resp
         .catch (err) =>
-            throw err 
+            throw err
     .then (resp)=>
         currentusers = server.users ? []
         historyusers = server.history.users ? []
@@ -253,14 +253,14 @@ UpdateServer = (baseUrl,server)->
             if result is false
                 historyusers.pop historyuser
                 return DeleteUser(baseUrl,server.instance,historyuser)
-        .then (resp) =>            
+        .then (resp) =>
             return resp
         .catch (err) =>
-            throw err 
+            throw err
     .then (resp)=>
         return resp
     .catch (err)=>
-        throw err    
+        throw err
 
 Update =  (context) ->
     throw new Error 'openvpn-storm.Update missingParams' unless context.bInstalledPackages and context.service.name
@@ -270,8 +270,8 @@ Update =  (context) ->
     #clients =  context.service.clients ? []
 
     config = context.policyConfig[context.service.name]
-    servers =  config.servers ? [] 
-    clients =  config.clients ? [] 
+    servers =  config.servers ? []
+    clients =  config.clients ? []
 
 
     getPromise()
@@ -283,8 +283,8 @@ Update =  (context) ->
             #updateclient response to be validated
             return resp
         .catch (err) =>
-            throw err 
-    .then (resp)=>        
+            throw err
+    .then (resp)=>
         #processing the servers array 
         Promise.map servers, (server) =>
             return UpdateServer(context.baseUrl,server)
@@ -303,21 +303,21 @@ Update =  (context) ->
 Validate =  (config) ->
     throw new Error "openvpn.Validate - invalid input" unless config.servers? and config.clients?
     for server in config.servers
-        chk = validate server.config, schema['server']        
+        chk = validate server.config, schema['server']
         console.log 'server validate result ', chk
         unless chk.valid
             throw new Error "server schema check failed"+  chk.valid
             return  false
         if server.users?
-            for user in server.users 
-                chk = validate user, schema['user']        
+            for user in server.users
+                chk = validate user, schema['user']
                 console.log 'user validate result ', chk
                 unless chk.valid
                     throw new Error "user schema check failed"+  chk.valid
                     return  false
 
     for client in config.clients
-        chk = validate client.config, schema['client']        
+        chk = validate client.config, schema['client']
         console.log 'client validate result ', chk
         unless chk.valid
             throw new Error "client schema check failed"+  chk.valid
@@ -337,7 +337,7 @@ Validate =  (config) ->
         res = Validator.validate conf, schema[name], options
         if res.errors?.length
             throw new Error "openvpn.Validate ", res
-###            
+###
 
 module.exports.start = Start
 module.exports.stop = Stop
