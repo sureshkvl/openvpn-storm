@@ -25,11 +25,13 @@ PostServer = (baseUrl,server)->
     needle.postAsync baseUrl + "/openvpn/server", server.config, json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        server.instance = resp[1].id
-        server.history ?= {}
-        server.history.config = utils.extend {},server.config
-        server.history.users = []
-        return server
+        # we should return the instance object for success case
+        return { id : server.id, instance_id : resp[1].id }
+        #server.instance = resp[1].id
+        #server.history ?= {}
+        #server.history.config = utils.extend {},server.config
+        #server.history.users = []
+        #return server
     .catch (err) =>
         throw err
 
@@ -107,9 +109,10 @@ Start =  (context) ->
 
     servers =  config.servers ? []
     clients =  config.clients ? []
-    
-    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
-    return context if utils.isEmpty(servers) and utils.isEmpty(clients)
+    instances = context.instances ? []
+    history =  context.history ? []
+    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
+    #return context if utils.isEmpty(servers) and utils.isEmpty(clients)
     return context unless config.enable is true
 
     getPromise()
@@ -117,6 +120,15 @@ Start =  (context) ->
         Promise.map servers, (server) ->
             return PostServer(context.baseUrl,server)
         .then (resp) =>
+            # received instance objects
+            console.log "Start 1st Response" 
+            console.log resp
+            context.instances = resp            
+        .then (resp) =>
+            #history obect to be updated here
+            for i in context.instances
+                for server in servers #where server.id is i.id 
+                    context.history.push server  if server.id is i.id 
             return resp
         .catch (err) =>
             throw err
@@ -124,6 +136,8 @@ Start =  (context) ->
         Promise.map clients, (client) ->
             return PostClient(context.baseUrl,client)
         .then (resp) =>
+            # instance objects
+
             return resp
         .catch (err) =>
             throw err
