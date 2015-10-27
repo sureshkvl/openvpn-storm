@@ -8,23 +8,8 @@ diff = require('deep-diff').diff
 utils = require('utils')._
 context = {}
 # input data
-#---------------------------------------------------------------------------------------------
-
-input1 = {
-    "baseUrl": "http://localhost:5000",
-    "bInstalledPackages": true,
-    "bFactoryPush": false,
-    "service":{
-        "name": "openvpn",
-        "servers":[],
-        "clients" : []
-    }
-}
-
-
-
-
-input = 
+#----------------------- context input schema overview starts ----------------------------#
+context = 
 {
     "baseUrl": "http://localhost:5000",
     "bInstalledPackages": true,
@@ -47,28 +32,43 @@ input =
             "servers":[],
             "clients" : []            
         }
-    }
+    },
+    "instances":[],
+    "history":[]
 }
 
+history =
+    { 
+        id : "string"
+        config : {},
+        users:[]
+    }
+instances =
+    {
+        id:"string",
+        instance_id :"string"        
+    }
 
 server =
     {
+        id : "string",
         config : {},
-        users: [],
-        instance: {},
-        history: { config:"",users:[]}
+        users: []    
     }
 
 client =
     {
-        config : {},
-        instance: {},
-        history: {config:""}
+        id : "string",
+        config : {}        
     }
+
+#----------------------- context schema overview ends ----------------------------#
+
 
 
 
 server1 = {}
+server1.id = "100"
 server1.config = {
                 "port": 7001,
                 "dev": "tun1",
@@ -99,6 +99,7 @@ server1.config = {
             }
 
 server2 = {}
+server2.id = "200"
 server2.config = {
                 "port": 7002,
                 "dev": "tun2",
@@ -129,6 +130,7 @@ server2.config = {
             }
 
 client1 = {}
+client1.id = "300"
 client1.config = {
                 "port":30000,
                 "pull": true,
@@ -163,6 +165,7 @@ client1.config = {
             }
 
 client2 = {}
+client2.id = "400"
 client2.config = {
                 "port": 30001,
                 "pull": true,
@@ -238,11 +241,11 @@ getPromise = ->
 	return new Promise (resolve, reject) ->
 		resolve()
 
-startcall = (input)->
+startcall = ()->
 	getPromise()
 	.then (resp) =>
-		jsonfile.writeFileSync("/tmp/start-input.json",input,{spaces: 2})
-		return Start input
+		jsonfile.writeFileSync("/tmp/start-input.json",context,{spaces: 2})
+		return Start context
 	.catch (err) =>
 		console.log "Start err ", err
 	.then (resp) =>
@@ -262,7 +265,7 @@ updatecall1 = (input)->
 		#input.service.servers.push server2
 		#context.service.servers[1].config.status = "/var/log/server-status.log"
 		jsonfile.writeFileSync("/tmp/update-input.json",input,{spaces: 2})		
-		return Update input
+		return Update context
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
@@ -389,12 +392,12 @@ stopcall = ()->
 
 #main routine
 
-input.policyConfig.openvpn.servers.push server1
-#input.service.factoryConfig.config.openvpn.servers.push server2
+#context.factoryConfig.openvpn.servers.push server1
+context.service.factoryConfig.config.openvpn.servers.push server2
 #input.service.servers.push server2
 #input.service.clients.push client1
 #input.service.clients.push client2
-startcall(input)
+startcall()
 #updatecall1(input) 
 #setTimeout(updatecall2,30000)
 #setTimeout(stopcall,60000)
