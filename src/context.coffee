@@ -47,9 +47,7 @@ PostClient = (baseUrl,client)->
 DeleteServer = (baseUrl,server)->
     needle.deleteAsync baseUrl + "/openvpn/server/#{server.instance}", json:true
     .then (resp) =>
-        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204    
-        #Todo : delete the server object        
-        #server = null
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
         return server            
     .catch (err) =>
         throw err
@@ -57,9 +55,7 @@ DeleteServer = (baseUrl,server)->
 DeleteClient = (baseUrl,client)->
     needle.deleteAsync baseUrl + "/openvpn/client/#{client.instance}", json:true
     .then (resp) =>
-        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204     
-        #Todo : delete the client object               
-        client = null
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
         return client
     .catch (err) =>
         throw err
@@ -104,11 +100,18 @@ DeleteUser = (baseUrl,serverid,user)->
 
 Start =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
-    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers ? [] 
-    clients =  context.service.clients ? [] 
+    configObj = context.service.factoryConfig?.config
+    config = configObj[context.service.name]
+
+    servers =  config.servers ? [] 
+    clients =  config.clients ? [] 
     
+    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
+    return context if utils.isEmpty(servers) and utils.isEmpty(clients)
+    return context unless config.enable is true
+
     getPromise()
     .then (resp) =>
         Promise.map servers, (server) ->
@@ -130,16 +133,26 @@ Start =  (context) ->
         throw err
 
 Stop = (context) ->
-    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+    throw new Error 'openvpn-storm.Stop missingParams' unless context.bInstalledPackages and context.service.name
+    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers ? [] 
-    clients =  context.service.clients ? [] 
+    #configObj = context.service.factoryConfig?.config
+    #config = configObj[context.service.name]
+    config = context.policyConfig[context.service.name]
+    servers =  config.servers ? [] 
+    clients =  config.clients ? [] 
+    
+    throw new Error "openvpn-storm.Stop missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
+    return context unless config.enable is true
    
     getPromise()
     .then (resp) =>
-        Promise.map servers, (server) ->
+        Promise.map servers, (server) ->            
             return DeleteServer(context.baseUrl,server)
-        .then (resp) =>
+        .then (resp) =>            
+            servers = utils.difference(servers,resp)            
+            config.servers = servers
+            #context.service.servers = servers
             return resp
         .catch (err) =>
             throw err
@@ -147,6 +160,9 @@ Stop = (context) ->
         Promise.map clients, (client) ->
             return DeleteClient(context.baseUrl,client)
         .then (resp) =>
+            clients = utils.difference(clients,resp)
+            config.clients = clients
+            #context.service.clients = clients
             return resp
         .catch (err) =>
             throw err
@@ -160,9 +176,6 @@ UserExists = (list,id)->
         if item.id is id
             return true
     return false
-
-
-
 
 
 ###
@@ -250,11 +263,16 @@ UpdateServer = (baseUrl,server)->
         throw err    
 
 Update =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
-    throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
+    throw new Error 'openvpn-storm.Update missingParams' unless context.bInstalledPackages and context.service.name
+    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    servers =  context.service.servers ? []
-    clients =  context.service.clients ? []
+    #servers =  context.service.servers ? []
+    #clients =  context.service.clients ? []
+
+    config = context.policyConfig[context.service.name]
+    servers =  config.servers ? [] 
+    clients =  config.clients ? [] 
+
 
     getPromise()
     .then (resp) =>
