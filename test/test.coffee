@@ -10,7 +10,7 @@ context = {}
 # input data
 #---------------------------------------------------------------------------------------------
 
-input = {
+input1 = {
     "baseUrl": "http://localhost:5000",
     "bInstalledPackages": true,
     "bFactoryPush": false,
@@ -18,8 +18,55 @@ input = {
         "name": "openvpn",
         "servers":[],
         "clients" : []
-            }
+    }
 }
+
+
+
+
+input = 
+{
+    "baseUrl": "http://localhost:5000",
+    "bInstalledPackages": true,
+    "bFactoryPush": false,
+    "service":{
+        "name": "openvpn",
+        "factoryConfig": {
+            "config": {
+                "openvpn": {
+                    "enable": true,                 
+                    "servers":[],
+                    "clients" : []                    
+                }
+            }
+        }
+    }
+    "policyConfig": {
+        "openvpn":  {
+            "enable": true,
+            "servers":[],
+            "clients" : []            
+        }
+    }
+}
+
+
+server =
+    {
+        config : {},
+        users: [],
+        instance: {},
+        history: { config:"",users:[]}
+    }
+
+client =
+    {
+        config : {},
+        instance: {},
+        history: {config:""}
+    }
+
+
 
 server1 = {}
 server1.config = {
@@ -205,17 +252,17 @@ startcall = (input)->
 		console.log "result from Start:\n ", JSON.stringify context
 	.done
 
-updatecall1 = ()->
+updatecall1 = (input)->
 	getPromise()
 	.then (resp) =>
 		#context.service.servers[0].config.status = "/var/log/server-status.log"
 		#context.service.clients[0].config.port = 40000
 		#context.service.servers.push server2
-		context.service.clients.push client2
+		#context.service.clients.push client2
 		#input.service.servers.push server2
 		#context.service.servers[1].config.status = "/var/log/server-status.log"
-		jsonfile.writeFileSync("/tmp/update-input.json",context,{spaces: 2})		
-		return Update context
+		jsonfile.writeFileSync("/tmp/update-input.json",input,{spaces: 2})		
+		return Update input
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
@@ -229,9 +276,10 @@ updatecall1 = ()->
 updatecall2 = ()->
 	getPromise()
 	.then (resp) =>
-		#context.service.servers[0].config.status = "/var/log/server-status.log"
-		context.service.servers[0].users ?= []
-		context.service.servers[0].users.push user0
+		input.policyConfig.openvpn.servers[0].config.status = "/var/log/server-status.log"
+		input.policyConfig.openvpn.servers[0].config.port = 40000
+		#context.service.servers[0].users ?= []		
+        #context.service.servers[0].users.push user0
 		jsonfile.writeFileSync("/tmp/update-input2.json",context,{spaces: 2})				
 		return Update context
 	.catch (err) =>
@@ -341,12 +389,15 @@ stopcall = ()->
 
 #main routine
 
-input.service.servers.push server1
+input.policyConfig.openvpn.servers.push server1
+#input.service.factoryConfig.config.openvpn.servers.push server2
 #input.service.servers.push server2
 #input.service.clients.push client1
 #input.service.clients.push client2
-startcall(input) 
-setTimeout(stopcall,30000)
+startcall(input)
+#updatecall1(input) 
+#setTimeout(updatecall2,30000)
+#setTimeout(stopcall,60000)
 ###
 setTimeout(updatecall1,30000)
 setTimeout(updatecall2,45000)
