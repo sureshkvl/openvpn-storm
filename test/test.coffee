@@ -34,7 +34,10 @@ context =
         }
     },
     "instances":[],
-    "history":[]
+    "history":{
+        "servers":[],
+        "clients":[]
+    }
 }
 
 history =
@@ -248,39 +251,66 @@ startcall = ()->
 		return Start context
 	.catch (err) =>
 		console.log "Start err ", err
-	.then (resp) =>
-		jsonfile.writeFileSync("/tmp/start-output.json",resp,{spaces: 2})
+	.then (resp) =>		
 		context = {}
 		context = utils.extend {},resp
+		jsonfile.writeFileSync("/tmp/start-output.json",context,{spaces: 2})
 		console.log "result from Start:\n ", JSON.stringify context
 	.done
+
+
+stopcall1 = ()->
+	getPromise()
+	.then (resp) =>
+		#preparing policyconfig for stop routine
+		for server in context.service.factoryConfig.config.openvpn.servers
+			context.policyConfig.openvpn.servers.push server
+
+		for client in context.service.factoryConfig.config.openvpn.clients
+			context.policyConfig.openvpn.clients.push client
+
+
+
+		context.service.factoryConfig.config.openvpn.servers = []
+		context.service.factoryConfig.config.openvpn.clients = []
+		console.log "context input is ", context
+		jsonfile.writeFileSync("/tmp/stop-input.json",context,{spaces: 2})
+		return Stop context
+	.catch (err) =>
+		console.log "Stop err ", err
+	.then (resp) =>
+		jsonfile.writeFileSync("/tmp/stop-output.json",resp,{spaces: 2})
+		console.log "result from Stop:\n ", JSON.stringify resp
+		context = {}
+		context = utils.extend {},resp		
+	.done
+
+
+
+
 
 updatecall1 = (input)->
 	getPromise()
 	.then (resp) =>
-		#context.service.servers[0].config.status = "/var/log/server-status.log"
-		#context.service.clients[0].config.port = 40000
-		#context.service.servers.push server2
-		#context.service.clients.push client2
-		#input.service.servers.push server2
-		#context.service.servers[1].config.status = "/var/log/server-status.log"
-		jsonfile.writeFileSync("/tmp/update-input.json",input,{spaces: 2})		
+
+		context.policyConfig.openvpn.servers.push server2
+		jsonfile.writeFileSync("/tmp/update-input.json",context,{spaces: 2})		
 		return Update context
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
 		console.log "result from Update:\n "	
-		jsonfile.writeFileSync("/tmp/update-output.json",resp,{spaces: 2})				
 		context = {}
 		context = utils.extend {},resp
-		console.log JSON.stringify resp		
+		jsonfile.writeFileSync("/tmp/update-output.json",context,{spaces: 2})				
+		console.log JSON.stringify context
 	.done
 
 updatecall2 = ()->
 	getPromise()
 	.then (resp) =>
-		input.policyConfig.openvpn.servers[0].config.status = "/var/log/server-status.log"
-		input.policyConfig.openvpn.servers[0].config.port = 40000
+		context.policyConfig.openvpn.servers[0].config.status = "/var/log/server-status.log"
+		context.policyConfig.openvpn.servers[0].config.port = 40000
 		#context.service.servers[0].users ?= []		
         #context.service.servers[0].users.push user0
 		jsonfile.writeFileSync("/tmp/update-input2.json",context,{spaces: 2})				
@@ -288,12 +318,10 @@ updatecall2 = ()->
 	.catch (err) =>
 		console.log "Update err ", err
 	.then (resp) =>
-		console.log "result from Update history:\n "			
-		jsonfile.writeFileSync("/tmp/update-output2.json",resp,{spaces: 2})				
 		context = {}
 		context = utils.extend {},resp
-		console.log JSON.stringify resp
-		#context = resp
+		jsonfile.writeFileSync("/tmp/update-output2.json",context,{spaces: 2})               
+		console.log JSON.stringify context
 	.done
 
 updatecall3 = ()->
@@ -373,33 +401,37 @@ updatecall7 = ()->
 
 
 
-stopcall = ()->
-	getPromise()
-	.then (resp) =>
-		jsonfile.writeFileSync("/tmp/stop-input.json",context,{spaces: 2})
-		console.log "stop context is ", context
-		return Stop context
-	.catch (err) =>
-		console.log "Stop err ", err
-	.then (resp) =>
-		jsonfile.writeFileSync("/tmp/stop-output.json",resp,{spaces: 2})
-		console.log "result from Stop:\n ", JSON.stringify resp
-		context = {}
-		context = utils.extend {},resp
-		
-	.done
-
 
 #main routine
-
-#context.factoryConfig.openvpn.servers.push server1
-context.service.factoryConfig.config.openvpn.servers.push server2
-#input.service.servers.push server2
-#input.service.clients.push client1
-#input.service.clients.push client2
+###
+#server test
+context.service.factoryConfig.config.openvpn.servers.push server1
 startcall()
-#updatecall1(input) 
-#setTimeout(updatecall2,30000)
+setTimeout(updatecall1,30000)
+setTimeout(updatecall2,60000)
+setTimeout(stopcall1,90000)
+
+###
+#client test
+context.service.factoryConfig.config.openvpn.clients.push client1
+startcall()
+#setTimeout(updatecall1,30000)
+#setTimeout(updatecall2,60000)
+setTimeout(stopcall1,30000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #setTimeout(stopcall,60000)
 ###
 setTimeout(updatecall1,30000)

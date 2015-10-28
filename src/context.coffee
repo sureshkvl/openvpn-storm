@@ -27,11 +27,6 @@ PostServer = (baseUrl,server)->
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
         # we should return the instance object for success case
         return { id : server.id, instance_id : resp[1].id }
-        #server.instance = resp[1].id
-        #server.history ?= {}
-        #server.history.config = utils.extend {},server.config
-        #server.history.users = []
-        #return server
     .catch (err) =>
         throw err
 
@@ -39,44 +34,41 @@ PostClient = (baseUrl,client)->
     needle.postAsync baseUrl + "/openvpn/client", client.config, json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        client.instance = resp[1].id
-        client.history ?= {}
-        client.history.config = utils.extend {},client.config
-        return client
+        return { id : server.id, instance_id : resp[1].id }        
     .catch (err) =>
         throw err
 
-DeleteServer = (baseUrl,server)->
-    needle.deleteAsync baseUrl + "/openvpn/server/#{server.instance}", json:true
+DeleteServer = (baseUrl,server,instanceid)->
+    needle.deleteAsync baseUrl + "/openvpn/server/#{instanceid}", json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
         return server
     .catch (err) =>
         throw err
 
-DeleteClient = (baseUrl,client)->
-    needle.deleteAsync baseUrl + "/openvpn/client/#{client.instance}", json:true
+DeleteClient = (baseUrl,client,instanceid)->
+    needle.deleteAsync baseUrl + "/openvpn/client/#{instanceid}", json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 204
         return client
     .catch (err) =>
         throw err
 
-PutServer = (baseUrl,server)->
-    needle.putAsync baseUrl + "/openvpn/server/#{server.instance}", server.config, json:true
+PutServer = (baseUrl,server,instanceid)->
+    needle.putAsync baseUrl + "/openvpn/server/#{instanceid}", server.config, json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        server.history.config = utils.extend {},server.config
+        #server.history.config = utils.extend {},server.config
         return server
     .catch (err) =>
         throw err
 
-PutClient = (baseUrl,client)->
-    needle.putAsync baseUrl + "/openvpn/client/#{client.instance}", client.config, json:true
+PutClient = (baseUrl,client,instanceid)->
+    needle.putAsync baseUrl + "/openvpn/client/#{instanceid}", client.config, json:true
     .then (resp) =>
         console.log "respo code", resp[0].statusCode
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        client.history.config = utils.extend {},client.config
+        #client.history.config = utils.extend {},client.config
         return client
     .catch (err) =>
         throw err
@@ -100,10 +92,47 @@ DeleteUser = (baseUrl,serverid,user)->
         throw err
 
 
+
+# utility functions
+#---------------------------------------------------------------------------------
+
+GetInstanceObject = (list,id)->
+    for item in list
+        if item.id is id
+            return item
+    return null
+
+GetHistoryObject = (history,id)->
+    for obj in history
+        if obj.id is id
+            return obj
+    return null
+
+removeItem = (list,id)->
+    itr = 0
+    for item in list
+        if item.id is id 
+            index = itr
+            break
+        itr++
+    console.log "iterator is ",itr
+    console.log "index is", index
+    delete list[index]
+
+UserExists = (list,id)->
+    for item in list
+        if item.id is id
+            return true
+    return false
+
+
+
+# utility functions
+#---------------------------------------------------------------------------------
+
 Start =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
-    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
-
+    
     configObj = context.service.factoryConfig?.config
     config = configObj[context.service.name]
 
@@ -112,7 +141,6 @@ Start =  (context) ->
     instances = context.instances ? []
     history =  context.history ? []
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
-    #return context if utils.isEmpty(servers) and utils.isEmpty(clients)
     return context unless config.enable is true
 
     getPromise()
@@ -121,14 +149,18 @@ Start =  (context) ->
             return PostServer(context.baseUrl,server)
         .then (resp) =>
             # received instance objects
-            console.log "Start 1st Response" 
-            console.log resp
-            context.instances = resp            
+            #console.log "Start 1st Response" 
+            #console.log resp
+            context.instances.push item for item in resp          
+            return resp
         .then (resp) =>
-            #history obect to be updated here
-            for i in context.instances
+            #history obect to be updated here            
+            console.log "resp", resp
+            console.log "Servers", servers
+            return  if utils.isEmpty(servers)            
+            for i in resp
                 for server in servers #where server.id is i.id 
-                    context.history.push server  if server.id is i.id 
+                    context.history.servers.push server if server.id is i.id
             return resp
         .catch (err) =>
             throw err
@@ -137,7 +169,14 @@ Start =  (context) ->
             return PostClient(context.baseUrl,client)
         .then (resp) =>
             # instance objects
-
+            context.instances.push item for item in resp 
+            return resp
+        .then (resp) =>
+            #history update 
+            return  if utils.isEmpty(clients)            
+            for i in resp
+                for client in clients #where client.id is i.id 
+                    context.history.clients.push client if client.id is i.id 
             return resp
         .catch (err) =>
             throw err
@@ -148,36 +187,49 @@ Start =  (context) ->
 
 Stop = (context) ->
     throw new Error 'openvpn-storm.Stop missingParams' unless context.bInstalledPackages and context.service.name
-    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
 
-    #configObj = context.service.factoryConfig?.config
-    #config = configObj[context.service.name]
     config = context.policyConfig[context.service.name]
     servers =  config.servers ? []
     clients =  config.clients ? []
-    
+    instances = context.instances
+    history = context.history
+
     throw new Error "openvpn-storm.Stop missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
     return context unless config.enable is true
    
     getPromise()
     .then (resp) =>
         Promise.map servers, (server) ->
-            return DeleteServer(context.baseUrl,server)
+            #check the server id is present in the instances array
+            instance = GetInstanceObject(instances,server.id)
+            console.log "instance is "
+            console.log instance
+            throw new Error " server instance is not found" unless instance?            
+            return  DeleteServer(context.baseUrl,server,instance.instance_id)
         .then (resp) =>
-            servers = utils.difference(servers,resp)
-            config.servers = servers
-            #context.service.servers = servers
+            #response contains servers array.
+            # remove the instances and history from the context
+            for s in resp
+                removeItem(instances,s.id)
+                removeItem(history.servers, s.id)        
             return resp
         .catch (err) =>
             throw err
     .then (resp) =>
         Promise.map clients, (client) ->
-            return DeleteClient(context.baseUrl,client)
+            #check the client id is present in the instances array
+            instance = GetInstanceObject(instances,client.id)
+            console.log "instance is "
+            console.log instance
+            throw new Error " client instance is not found" unless instance?
+            return DeleteClient(context.baseUrl,client,instance.instance_id)
         .then (resp) =>
-            clients = utils.difference(clients,resp)
-            config.clients = clients
-            #context.service.clients = clients
-            return resp
+            #response contains clients array.
+            # remove the respective instances and history from the context
+            for c in resp
+                removeItem(instances,c.id)
+                removeItem(history.clients, c.id)        
+            return resp            
         .catch (err) =>
             throw err
     .then (resp) =>
@@ -185,11 +237,6 @@ Stop = (context) ->
     .catch (err) =>
         throw err
 
-UserExists = (list,id)->
-    for item in list
-        if item.id is id
-            return true
-    return false
 
 
 ###
@@ -216,7 +263,7 @@ UserExists = (list,id)->
             if history user is not present in the current users , 
                        then this uses to be deleted. DELETE this user
     
-###
+
 
 
 UpdateClient = (baseUrl,client)->
@@ -276,6 +323,8 @@ UpdateServer = (baseUrl,server)->
     .catch (err)=>
         throw err
 
+###
+
 Update =  (context) ->
     throw new Error 'openvpn-storm.Update missingParams' unless context.bInstalledPackages and context.service.name
     #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
@@ -286,7 +335,8 @@ Update =  (context) ->
     config = context.policyConfig[context.service.name]
     servers =  config.servers ? []
     clients =  config.clients ? []
-
+    instances = context.instances
+    history = context.history
 
     getPromise()
     .then (resp) =>
@@ -300,8 +350,43 @@ Update =  (context) ->
             throw err
     .then (resp)=>
         #processing the servers array 
-        Promise.map servers, (server) =>
-            return UpdateServer(context.baseUrl,server)
+        Promise.map servers, (server) =>            
+            #check the server id is present in the instances array
+            instance = GetInstanceObject(instances,server.id)
+            console.log "instance is "
+            console.log instance
+            #if instance is not present, then post the new server                
+            if instance is null
+                getPromise()
+                .then (resp)=>
+                    return PostServer(context.baseUrl,server)
+                .then (resp)=>
+                    # received instance object, update the instance object
+                    console.log "Update Post Server Response" 
+                    console.log resp
+                    context.instances.push resp  
+                    return resp
+                .then (resp)=>
+                    #history to be update here
+                    context.history.servers.push server
+                    return resp
+                .catch (err)=>
+                    throw err
+            #if instance is present, then put server config
+            else
+                history = GetHistoryObject(server.id)
+                #history diff  to be done
+                #differences = diff(server.config,history.config)
+                console.log "history is "
+                console.log history
+                getPromise()
+                .then (resp)=>
+                    return  PutServer(context.baseUrl,server,instance.instance_id)
+                .then (resp)=>
+                    history = utils.extend {},server.config
+                    return resp
+                .catch (err)=>
+                    throw err
         .then (resp) =>
             #update server response to be validated here
             return resp
@@ -338,20 +423,6 @@ Validate =  (config) ->
             return  false
 
     return true
-###
-    policyConfig = {}
-    if config.enable and config.coreConfig
-        policyConfig.zebra = config.coreConfig
-    if config.protocol.ospf.enable and config.protocol.ospf.config
-        policyConfig.ospfd = config.protocol.ospf.config
-
-    for name, conf of policyConfig
-        options = {}
-        options.propertyName = name
-        res = Validator.validate conf, schema[name], options
-        if res.errors?.length
-            throw new Error "openvpn.Validate ", res
-###
 
 module.exports.start = Start
 module.exports.stop = Stop
