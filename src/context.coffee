@@ -34,7 +34,7 @@ PostClient = (baseUrl,client)->
     needle.postAsync baseUrl + "/openvpn/client", client.config, json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        return { id : server.id, instance_id : resp[1].id }        
+        return { id : client.id, instance_id : resp[1].id }        
     .catch (err) =>
         throw err
 
@@ -68,7 +68,6 @@ PutClient = (baseUrl,client,instanceid)->
     .then (resp) =>
         console.log "respo code", resp[0].statusCode
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
-        #client.history.config = utils.extend {},client.config
         return client
     .catch (err) =>
         throw err
@@ -148,16 +147,13 @@ Start =  (context) ->
         Promise.map servers, (server) ->
             return PostServer(context.baseUrl,server)
         .then (resp) =>
-            # received instance objects
-            #console.log "Start 1st Response" 
-            #console.log resp
             context.instances.push item for item in resp          
             return resp
         .then (resp) =>
             #history obect to be updated here            
             console.log "resp", resp
             console.log "Servers", servers
-            return  if utils.isEmpty(servers)            
+            return resp if utils.isEmpty(servers)                 
             for i in resp
                 for server in servers #where server.id is i.id 
                     context.history.servers.push server if server.id is i.id
@@ -327,11 +323,6 @@ UpdateServer = (baseUrl,server)->
 
 Update =  (context) ->
     throw new Error 'openvpn-storm.Update missingParams' unless context.bInstalledPackages and context.service.name
-    #throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(context.service.servers) and utils.isEmpty(context.service.clients)
-
-    #servers =  context.service.servers ? []
-    #clients =  context.service.clients ? []
-
     config = context.policyConfig[context.service.name]
     servers =  config.servers ? []
     clients =  config.clients ? []
@@ -342,7 +333,42 @@ Update =  (context) ->
     .then (resp) =>
         #processing the clients array
         Promise.map clients, (client) =>
-            return UpdateClient(context.baseUrl,client)
+            #check the client id is present in the instances array
+            instance = GetInstanceObject(instances,client.id)
+            console.log "instance is "
+            console.log instance
+            #if instance is not present, then post the new client               
+            if instance is null
+                getPromise()
+                .then (resp)=>
+                    return PostClient(context.baseUrl,client)
+                .then (resp)=>
+                    # received instance object, update the instance object
+                    console.log "Update Post client Response" 
+                    console.log resp
+                    context.instances.push resp  
+                    return resp
+                .then (resp)=>
+                    #history to be update here
+                    context.history.clients.push client
+                    return resp
+                .catch (err)=>
+                    throw err
+            #if instance is present, then put client config
+            else
+                history = GetHistoryObject(client.id)
+                #history diff  to be done
+                #differences = diff(client.config,history.config)
+                console.log "history is "
+                console.log history
+                getPromise()
+                .then (resp)=>
+                    return  PutClient(context.baseUrl,client,instance.instance_id)
+                .then (resp)=>
+                    history = utils.extend {},client.config
+                    return resp
+                .catch (err)=>
+                    throw err
         .then (resp) =>
             #updateclient response to be validated
             return resp
