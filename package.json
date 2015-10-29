@@ -2,7 +2,7 @@
   "name": "openvpn-storm",
   "description": "openvpn-storm is a easy to use module that exposes endpoints to configure openvpn on any linux system",
   "author": "Clearpath Plugins Team",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "repository": {
     "type": "git",
     "url": "git://github.com/stormstack/openvpn-storm.git"

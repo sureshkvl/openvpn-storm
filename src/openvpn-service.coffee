@@ -116,4 +116,5 @@ module.exports.OpenvpnService = OpenvpnService
 module.exports.OpenvpnClient = OpenvpnClientService
 module.exports.OpenvpnServer = OpenvpnServerService
 
-
+Context = require('./context')
+module.exports.Context = Context
