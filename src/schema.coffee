@@ -4,14 +4,20 @@ schema_server =
     additionalProperties: true
     properties:
         id:                 {"type":"string", "required":false}
-        port:                {"type":"number", "required":true}
-        dev:                 {"type":"string", "required":true}
-        proto:               {"type":"string", "required":true}
-        ca:                  {"type":"string", "required":true}
-        dh:                  {"type":"string", "required":true}
-        cert:                {"type":"string", "required":true}
-        key:                 {"type":"string", "required":true}
-        server:              {"type":"string", "required":true}
+        port:                {"type":"number", "required":false}
+        dev:                 {"type":"string", "required":false}
+        proto:               {"type":"string", "required":false}
+        ca:                  {"type":"string", "required":false}
+        dh:                  {"type":"string", "required":false}
+        cert:                {"type":"string", "required":false}
+        key:                 {"type":"string", "required":false}
+        server:              {"type":"string", "required":false}
+        ifconfig:            {"type":"string", "required":false}
+        secret :             {"type":"string", "required":false}
+        local :              {"type":"string", "required":false}
+        remote :             {"type":"string", "required":false}
+        lport :              {"type":"number", "required":false} 
+        rport :              {"type":"number", "required":false}
         'ifconfig-pool-persist': {"type":"string", "required":false}
         'script-security':   {"type":"string", "required":false}
         multihome:           {"type":"boolean", "required":false}
@@ -58,16 +64,22 @@ schema_client =
     additionalProperties: true
     properties:
         id:                  {"type":"string", "required":false}
+        client:              {"type":"boolean", "required":false}
         port:                {"type":"number", "required":false}
-        pull:                {"type":"boolean", "required":true}
-        'tls-client':        {"type":"boolean", "required":true}
-        dev:                 {"type":"string", "required":true}
+        pull:                {"type":"boolean", "required":false}
+        'tls-client':        {"type":"boolean", "required":false}
+        dev:                 {"type":"string", "required":false}
         proto:               {"type":"string", "required":false}
-        ca:                  {"type":"string", "required":true}
+        ca:                  {"type":"string", "required":false}
         dh:                  {"type":"string", "required":false}
-        cert:                {"type":"string", "required":true}
-        key:                 {"type":"string", "required":true}
-        remote:              {"type":"string", "required":true}
+        cert:                {"type":"string", "required":false}
+        key:                 {"type":"string", "required":false}
+        remote:              {"type":"string", "required":false}
+        ifconfig:            {"type":"string", "required":false}
+        secret :             {"type":"string", "required":false}
+        local :              {"type":"string", "required":false}
+        lport :              {"type":"number", "required":false} 
+        rport :              {"type":"number", "required":false}
         cipher:              {"type":"string", "required":false}
         'tls-cipher':        {"type":"string", "required":false}
         'remote-random':     {"type":"boolean", "required":false}
