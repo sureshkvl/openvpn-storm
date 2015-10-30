@@ -50,6 +50,7 @@ class OpenvpnService extends StormService
                     when "dh" then @data.dh
                     when "cert"  then @data.cert
                     when "key"  then @data.key
+                    when "secret" then @data.secret
                 path = "#{dir}/#{filename}"
                 console.log "path"
                 fs.writeFileSync path, new Buffer(cert.data || '',"base64")
@@ -63,7 +64,7 @@ class OpenvpnService extends StormService
                                 vpnconfig += "#{key} #{i}\n" if key is "route"
                                 vpnconfig += "#{key} \"#{i}\"\n" if key is "push"
                     when "number", "string"
-                        if key in ['ca','dh','cert','key']
+                        if key in ['ca','dh','cert','key','secret']
                             vpnconfig += key + ' ' + "#{dir}/#{val}" + "\n"
                         else
                             vpnconfig += key + ' ' + val + "\n"
