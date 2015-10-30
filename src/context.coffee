@@ -24,6 +24,7 @@ getPromise = ->
 PostServer = (baseUrl,server)->
     needle.postAsync baseUrl + "/openvpn/server", server.config, json:true
     .then (resp) =>
+        console.log "statuscode: ", resp[0].statusCode
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
         # we should return the instance object for success case
         return { id : server.id, instance_id : resp[1].id }
@@ -137,8 +138,11 @@ Start =  (context) ->
 
     servers =  config.servers ? []
     clients =  config.clients ? []
-    instances = context.instances ? []
-    history =  context.history ? []
+    context.instances ?= []
+    context.history ?= {}
+    context.history?.servers = []
+    context.history?.clients = []
+
     throw new Error "openvpn-storm.Start missing server,client info" if utils.isEmpty(servers) and utils.isEmpty(clients)
     return context unless config.enable is true
 
