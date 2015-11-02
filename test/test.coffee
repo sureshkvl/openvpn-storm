@@ -100,6 +100,7 @@ server1.config = {
                 }
                 ]
             }
+server1.users = []
 
 server2 = {}
 server2.id = "200"
@@ -131,6 +132,7 @@ server2.config = {
                 }
                 ]
             }
+server2.users = []
 
 client1 = {}
 client1.id = "300"
@@ -292,7 +294,10 @@ stopcall1 = ()->
 updatecall1 = (input)->
 	getPromise()
 	.then (resp) =>
+        #server2.users.push user0
+        #server2.users.push user1
 		context.policyConfig.openvpn.servers.push server2
+
 		jsonfile.writeFileSync("/tmp/update-input.json",context,{spaces: 2})		
 		return Update context
 	.catch (err) =>
@@ -308,7 +313,7 @@ updatecall1 = (input)->
 updatecall2 = ()->
 	getPromise()
 	.then (resp) =>
-		context.policyConfig.openvpn.servers[0].config.status = "/var/log/server-status.log"
+		context.policyConfig.openvpn.servers[0].users.push user1
 		context.policyConfig.openvpn.servers[0].config.port = 40000
 		#context.service.servers[0].users ?= []		
 		jsonfile.writeFileSync("/tmp/update-input2.json",context,{spaces: 2})				
@@ -353,6 +358,7 @@ updatecall4 = ()->
 		console.log JSON.stringify context
 	.done
 
+
 updatecall5 = ()->
 	getPromise()
 	.then (resp) =>
@@ -395,13 +401,13 @@ updatecall7 = ()->
 
 
 #main routine
-###
+
 #server test
 context.service.factoryConfig.config.openvpn.servers.push server1
 startcall()
 setTimeout(updatecall1,30000)
 setTimeout(updatecall2,60000)
-setTimeout(stopcall1,90000)
+setTimeout(stopcall1,120000)
 
 ###
 #client test
@@ -411,7 +417,7 @@ setTimeout(updatecall3,30000)
 setTimeout(updatecall4,60000)
 setTimeout(stopcall1,90000)
 
-
+###
 
 
 

@@ -325,6 +325,45 @@ UpdateServer = (baseUrl,server)->
 
 ###
 
+UpdateUsers = (baseUrl,instanceid,server,history)->
+    getPromise()
+    .then (resp) =>
+        currentusers = server.users ? []
+        historyusers = history.users ? []
+
+        #process the currentusers array
+        console.log "currentusers ",currentusers
+        Promise.map currentusers, (currentuser) =>
+            console.log "currentuser  ",currentuser
+            result =  UserExists(historyusers, currentuser.id)
+            if result is false
+                historyusers.push currentuser
+                return PostUser(baseUrl,instanceid,currentuser)
+        .then (resp) =>
+            return resp
+        .catch (err) =>
+            throw err
+    .then (resp)=>
+        currentusers = server.users ? []
+        historyusers = history.users ? []
+        #process the historyusers array
+        console.log "historyusers ", historyusers
+        Promise.map historyusers, (historyuser) =>
+            console.log "historyuser ", historyuser
+            result =  UserExists(currentusers, historyuser.id)
+            if result is false
+                historyusers.pop historyuser
+                return DeleteUser(baseUrl,instanceid,historyuser)
+        .then (resp) =>
+            return resp
+        .catch (err) =>
+            throw err
+    .then (resp)=>
+        return resp
+    .catch (err)=>
+        throw err
+
+
 Update =  (context) ->
     throw new Error 'openvpn-storm.Update missingParams' unless context.bInstalledPackages and context.service.name
     config = context.policyConfig[context.service.name]
@@ -360,7 +399,7 @@ Update =  (context) ->
                     throw err
             #if instance is present, then put client config
             else
-                history = GetHistoryObject(client.id)
+                history = GetHistoryObject(context.history.clients,client.id)
                 #history diff  to be done
                 #differences = diff(client.config,history.config)
                 console.log "history is "
@@ -393,18 +432,28 @@ Update =  (context) ->
                 .then (resp)=>
                     # received instance object, update the instance object
                     console.log "Update Post Server Response" 
-                    console.log resp
+                    #console.log resp
                     context.instances.push resp  
+                    #Post the Users if users are available in servers array
+                    #Promise.map server.users, (user) =>
+                    #    return PostUser(context.baseUrl,resp.instance_id,user)
+                    #.then (resp)=>
+                    #    return resp
+                    #.catch (err)=>
+                    #    return err
                     return resp
                 .then (resp)=>
                     #history to be update here
                     context.history.servers.push server
                     return resp
+                .then (resp)=>
+                    history = GetHistoryObject(context.history.servers,server.id)    
+                    return UpdateUsers(context.baseUrl,resp.instance_id,server,history)
                 .catch (err)=>
                     throw err
             #if instance is present, then put server config
             else
-                history = GetHistoryObject(server.id)
+                history = GetHistoryObject(context.history.servers,server.id)
                 #history diff  to be done
                 #differences = diff(server.config,history.config)
                 console.log "history is "
@@ -412,8 +461,10 @@ Update =  (context) ->
                 getPromise()
                 .then (resp)=>
                     return  PutServer(context.baseUrl,server,instance.instance_id)
+                .then (resp)=>                         
+                    return UpdateUsers(context.baseUrl,instance.instance_id,server,history)
                 .then (resp)=>
-                    history = utils.extend {},server.config
+                    history.config = utils.extend {},server.config                    
                     return resp
                 .catch (err)=>
                     throw err
