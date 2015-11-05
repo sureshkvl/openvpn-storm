@@ -32,6 +32,7 @@ PostServer = (baseUrl,server)->
         throw err
 
 PostClient = (baseUrl,client)->
+    console.log "post a new client", client.config
     needle.postAsync baseUrl + "/openvpn/client", client.config, json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
@@ -334,10 +335,12 @@ UpdateUsers = (baseUrl,instanceid,server,history)->
         #process the currentusers array
         console.log "currentusers ",currentusers
         Promise.map currentusers, (currentuser) =>
-            console.log "currentuser  ",currentuser
+            #console.log "currentuser  ",currentuser
             result =  UserExists(historyusers, currentuser.id)
+
             if result is false
                 historyusers.push currentuser
+                console.log "Posting the user ",currentuser
                 return PostUser(baseUrl,instanceid,currentuser)
         .then (resp) =>
             return resp
@@ -349,10 +352,11 @@ UpdateUsers = (baseUrl,instanceid,server,history)->
         #process the historyusers array
         console.log "historyusers ", historyusers
         Promise.map historyusers, (historyuser) =>
-            console.log "historyuser ", historyuser
+            #console.log "historyuser ", historyuser
             result =  UserExists(currentusers, historyuser.id)
             if result is false
                 historyusers.pop historyuser
+                console.log "Deleting the user ", historyuser
                 return DeleteUser(baseUrl,instanceid,historyuser)
         .then (resp) =>
             return resp
@@ -377,13 +381,14 @@ Update =  (context) ->
         #processing the clients array
         Promise.map clients, (client) =>
             #check the client id is present in the instances array
+            console.log "client is ", client
             instance = GetInstanceObject(instances,client.id)
-            console.log "instance is "
-            console.log instance
+            console.log "instance is ", instance
             #if instance is not present, then post the new client               
             if instance is null
                 getPromise()
                 .then (resp)=>
+                    console.log "posting a new client"
                     return PostClient(context.baseUrl,client)
                 .then (resp)=>
                     # received instance object, update the instance object
@@ -435,20 +440,20 @@ Update =  (context) ->
                     #console.log resp
                     context.instances.push resp  
                     #Post the Users if users are available in servers array
-                    #Promise.map server.users, (user) =>
-                    #    return PostUser(context.baseUrl,resp.instance_id,user)
-                    #.then (resp)=>
-                    #    return resp
-                    #.catch (err)=>
-                    #    return err
+                    Promise.map server.users, (user) =>
+                        return PostUser(context.baseUrl,resp.instance_id,user)
+                    .then (resp)=>
+                        return resp
+                    .catch (err)=>
+                        return err
                     return resp
+                #.then (resp)=>
+                #    history = GetHistoryObject(context.history.servers,server.id)    
+                #   return UpdateUsers(context.baseUrl,resp.instance_id,server,history)
                 .then (resp)=>
                     #history to be update here
                     context.history.servers.push server
                     return resp
-                .then (resp)=>
-                    history = GetHistoryObject(context.history.servers,server.id)    
-                    return UpdateUsers(context.baseUrl,resp.instance_id,server,history)
                 .catch (err)=>
                     throw err
             #if instance is present, then put server config
